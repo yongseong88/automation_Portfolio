@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>카테고리 · 마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <p class="breadcrumb" data-testid="breadcrumb"><a href="/">홈</a> › <span id="crumb-cat"></span></p>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <h1 class="section-title" id="cat-title" data-testid="category-title" style="margin:0"></h1>
+      <select id="sort" data-testid="sort" aria-label="정렬"
+              style="padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit">
+        <option value="id:asc">기본순</option>
+        <option value="price:asc">낮은 가격순</option>
+        <option value="price:desc">높은 가격순</option>
+        <option value="name:asc">이름순</option>
+      </select>
+    </div>
+
+    <div class="loading hidden" id="loading" data-testid="loading" style="margin-top:1rem">
+      <span class="spinner" aria-hidden="true"></span> 상품을 불러오는 중…
+    </div>
+    <p class="empty hidden" id="empty" data-testid="empty">해당 카테고리에 상품이 없습니다.</p>
+    <div class="grid" id="product-grid" data-testid="product-grid" style="margin-top:1rem"></div>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    // URL: /category/{slug}
+    const slug = location.pathname.split("/").filter(Boolean)[1];
+
+    async function setTitle() {
+      const res = await fetch("/api/categories");
+      const data = await res.json();
+      const cat = data.items.find((c) => c.slug === slug);
+      const label = cat ? `${cat.emoji} ${cat.name}` : slug;
+      document.querySelector("#cat-title").textContent = label;
+      document.querySelector("#crumb-cat").textContent = cat ? cat.name : slug;
+    }
+
+    async function load() {
+      document.querySelector("#loading").classList.remove("hidden");
+      document.querySelector("#empty").classList.add("hidden");
+
+      const [sort, order] = document.querySelector("#sort").value.split(":");
+      const res = await fetch(
+        `/api/products?category=${slug}&sort=${sort}&order=${order}&page_size=50`
+      );
+      const data = await res.json();
+      document.querySelector("#loading").classList.add("hidden");
+
+      document.querySelector("#product-grid").innerHTML =
+        data.items.map(productCardHTML).join("");
+      document.querySelector("#empty").classList.toggle("hidden", data.total !== 0);
+    }
+
+    document.querySelector("#sort").addEventListener("change", load);
+
+    initHeader();
+    setTitle();
+    load();
+  </script>
+</body>
+</html>

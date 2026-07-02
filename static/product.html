@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>상품 상세 · 마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <div class="loading" id="loading" data-testid="loading">
+      <span class="spinner" aria-hidden="true"></span> 불러오는 중…
+    </div>
+
+    <p class="empty hidden" id="not-found" data-testid="not-found">
+      존재하지 않는 상품입니다. <a href="/" style="color:var(--purple)">홈으로</a>
+    </p>
+
+    <section class="detail hidden" id="detail" data-testid="detail">
+      <div class="thumb" id="thumb" style="aspect-ratio:1/1"></div>
+      <div>
+        <p class="breadcrumb"><a href="/">홈</a> › <span id="crumb"></span></p>
+        <h1 id="name" data-testid="detail-name"></h1>
+        <span class="punit" id="unit"></span>
+        <div class="price-row" id="price-row" style="margin-top:.8rem"></div>
+        <p class="desc" id="desc" data-testid="detail-desc"></p>
+
+        <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
+          <span>수량</span>
+          <div class="stepper" data-testid="stepper">
+            <button id="minus" data-testid="qty-minus" aria-label="수량 감소">−</button>
+            <span class="qty" id="qty" data-testid="qty">1</span>
+            <button id="plus" data-testid="qty-plus" aria-label="수량 증가">+</button>
+          </div>
+        </div>
+
+        <div class="buy-row">
+          <button class="btn btn-primary" id="add-cart" data-testid="add-to-cart">장바구니 담기</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    // URL: /product/{id}
+    const id = location.pathname.split("/").filter(Boolean)[1];
+    let qty = 1;
+    let product = null;
+
+    function renderPrice(p) {
+      const row = document.querySelector("#price-row");
+      row.innerHTML = p.discount_pct
+        ? `<span class="discount">${p.discount_pct}%</span>
+           <span class="price" data-testid="detail-price">${won(p.price)}</span>
+           <span class="original">${won(p.original_price)}</span>`
+        : `<span class="price" data-testid="detail-price">${won(p.price)}</span>`;
+    }
+
+    async function load() {
+      const res = await fetch(`/api/products/${id}`);
+      document.querySelector("#loading").classList.add("hidden");
+
+      if (res.status === 404) {
+        document.querySelector("#not-found").classList.remove("hidden");
+        return;
+      }
+      product = await res.json();
+
+      const thumb = document.querySelector("#thumb");
+      thumb.style.background = product.color;
+      thumb.innerHTML = `<span aria-hidden="true">${product.emoji}</span>`;
+      document.querySelector("#crumb").textContent = product.name;
+      document.querySelector("#name").textContent = product.name;
+      document.querySelector("#unit").textContent = product.unit;
+      document.querySelector("#desc").textContent = product.description;
+      renderPrice(product);
+      document.querySelector("#detail").classList.remove("hidden");
+
+      const addBtn = document.querySelector("#add-cart");
+      if (product.sold_out) {
+        addBtn.textContent = "품절";
+        addBtn.disabled = true;
+        addBtn.setAttribute("data-testid", "sold-out-btn");
+      }
+    }
+
+    function setQty(v) {
+      qty = Math.max(1, Math.min(99, v));
+      document.querySelector("#qty").textContent = qty;
+      document.querySelector("#minus").disabled = qty <= 1;
+    }
+    document.querySelector("#minus").addEventListener("click", () => setQty(qty - 1));
+    document.querySelector("#plus").addEventListener("click", () => setQty(qty + 1));
+
+    document.querySelector("#add-cart").addEventListener("click", async () => {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product_id: Number(id), qty }),
+      });
+      if (res.ok) {
+        await refreshCartCount();
+        toast(`장바구니에 담았어요 (${qty}개)`, "ok");
+      } else {
+        toast("담기에 실패했습니다.", "err");
+      }
+    });
+
+    setQty(1);
+    initHeader();
+    load();
+  </script>
+</body>
+</html>

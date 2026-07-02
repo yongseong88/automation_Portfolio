@@ -1,0 +1,8 @@
+[
+  {"slug": "vegetables", "name": "채소", "emoji": "🥬"},
+  {"slug": "fruits", "name": "과일", "emoji": "🍓"},
+  {"slug": "meat", "name": "정육·계란", "emoji": "🥩"},
+  {"slug": "dairy", "name": "유제품", "emoji": "🧀"},
+  {"slug": "bakery", "name": "베이커리", "emoji": "🥐"},
+  {"slug": "drinks", "name": "음료", "emoji": "🧃"}
+]

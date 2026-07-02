@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <section class="hero" data-testid="hero">
+      <h1>오늘 장보기, 마켓프레시</h1>
+      <p>밤 11시 전 주문 시 내일 새벽 도착</p>
+    </section>
+
+    <!-- 검색 결과 헤더 (검색 시에만 표시) -->
+    <h2 class="section-title hidden" id="search-title" data-testid="search-title"></h2>
+
+    <!-- 특가 섹션 (검색 중엔 숨김) -->
+    <section id="deal-section">
+      <h2 class="section-title">🔥 이번 주 특가</h2>
+      <div class="grid" id="deal-grid" data-testid="deal-grid"></div>
+    </section>
+
+    <h2 class="section-title" id="all-title">전체 상품</h2>
+    <div class="loading hidden" id="loading" data-testid="loading">
+      <span class="spinner" aria-hidden="true"></span> 상품을 불러오는 중…
+    </div>
+    <p class="empty hidden" id="empty" data-testid="empty">검색 결과가 없습니다.</p>
+    <div class="grid" id="product-grid" data-testid="product-grid"></div>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const q = params.get("q") || "";
+
+    async function load() {
+      document.querySelector("#loading").classList.remove("hidden");
+      document.querySelector("#empty").classList.add("hidden");
+
+      const res = await fetch(`/api/products?page_size=50&q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      document.querySelector("#loading").classList.add("hidden");
+
+      const grid = document.querySelector("#product-grid");
+      grid.innerHTML = data.items.map(productCardHTML).join("");
+      document.querySelector("#empty").classList.toggle("hidden", data.total !== 0);
+
+      if (q) {
+        // 검색 모드: 특가 섹션 숨기고 검색 결과 제목 표시
+        document.querySelector("#deal-section").classList.add("hidden");
+        document.querySelector("#all-title").classList.add("hidden");
+        const title = document.querySelector("#search-title");
+        title.textContent = `"${q}" 검색 결과 ${data.total}건`;
+        title.classList.remove("hidden");
+        document.querySelector("#site-search").value = q;
+      } else {
+        // 특가 = 할인 상품
+        const deals = data.items.filter((p) => p.discount_pct > 0);
+        document.querySelector("#deal-grid").innerHTML = deals.map(productCardHTML).join("");
+      }
+    }
+
+    initHeader();
+    load();
+  </script>
+</body>
+</html>

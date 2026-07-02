@@ -1,0 +1,18 @@
+[
+  {"id": 1, "name": "유기농 시금치", "category": "vegetables", "price": 3900, "original_price": 4500, "unit": "200g", "emoji": "🥬", "color": "#e7f4e4", "stock": 20, "badge": "특가", "description": "당일 수확한 신선한 유기농 시금치입니다."},
+  {"id": 2, "name": "친환경 당근", "category": "vegetables", "price": 2900, "original_price": null, "unit": "500g", "emoji": "🥕", "color": "#fdeede", "stock": 15, "badge": null, "description": "흙당근 그대로, 단맛이 살아있는 친환경 당근."},
+  {"id": 3, "name": "브로콜리", "category": "vegetables", "price": 2500, "original_price": null, "unit": "1개", "emoji": "🥦", "color": "#e7f4e4", "stock": 19, "badge": null, "description": "아삭한 식감의 신선 브로콜리."},
+  {"id": 4, "name": "제주 감귤", "category": "fruits", "price": 9900, "original_price": 12000, "unit": "1.5kg", "emoji": "🍊", "color": "#fdeede", "stock": 30, "badge": "특가", "description": "제주에서 온 새콤달콤 노지 감귤."},
+  {"id": 5, "name": "설향 딸기", "category": "fruits", "price": 12900, "original_price": null, "unit": "500g", "emoji": "🍓", "color": "#fce4ec", "stock": 8, "badge": "신상", "description": "향이 진한 설향 품종 프리미엄 딸기."},
+  {"id": 6, "name": "아보카도", "category": "fruits", "price": 3500, "original_price": null, "unit": "1개", "emoji": "🥑", "color": "#e7f4e4", "stock": 16, "badge": null, "description": "후숙 완료, 바로 먹기 좋은 아보카도."},
+  {"id": 7, "name": "한우 등심", "category": "meat", "price": 39900, "original_price": null, "unit": "300g", "emoji": "🥩", "color": "#fbe4e4", "stock": 5, "badge": "한정", "description": "1++ 등급 한우 등심, 냉장 진공포장."},
+  {"id": 8, "name": "무항생제 계란", "category": "meat", "price": 6500, "original_price": null, "unit": "15구", "emoji": "🥚", "color": "#fdf6e3", "stock": 40, "badge": null, "description": "무항생제 동물복지 계란 15구."},
+  {"id": 9, "name": "자연방목 우유", "category": "dairy", "price": 3200, "original_price": null, "unit": "900ml", "emoji": "🥛", "color": "#f4f4f7", "stock": 25, "badge": null, "description": "자연방목 젖소에서 짠 1A등급 우유."},
+  {"id": 10, "name": "그릭 요거트", "category": "dairy", "price": 4500, "original_price": 5000, "unit": "450g", "emoji": "🍶", "color": "#f4f4f7", "stock": 18, "badge": "특가", "description": "단백질 가득 무가당 그릭 요거트."},
+  {"id": 11, "name": "모짜렐라 치즈", "category": "dairy", "price": 7900, "original_price": null, "unit": "200g", "emoji": "🧀", "color": "#fdf6e3", "stock": 9, "badge": null, "description": "쫀득한 자연치즈 모짜렐라."},
+  {"id": 12, "name": "통밀 식빵", "category": "bakery", "price": 4200, "original_price": null, "unit": "1개", "emoji": "🍞", "color": "#f6ecd9", "stock": 12, "badge": null, "description": "통밀 100% 무첨가 데일리 식빵."},
+  {"id": 13, "name": "크루아상", "category": "bakery", "price": 5500, "original_price": null, "unit": "4개입", "emoji": "🥐", "color": "#f6ecd9", "stock": 0, "badge": null, "description": "버터 풍미 가득한 생크루아상 4개입."},
+  {"id": 14, "name": "바게트", "category": "bakery", "price": 3800, "original_price": null, "unit": "1개", "emoji": "🥖", "color": "#f6ecd9", "stock": 7, "badge": null, "description": "겉바속촉 정통 프랑스식 바게트."},
+  {"id": 15, "name": "콜드브루 커피", "category": "drinks", "price": 4900, "original_price": null, "unit": "1L", "emoji": "☕", "color": "#ece4dd", "stock": 22, "badge": null, "description": "12시간 저온추출 콜드브루 원액."},
+  {"id": 16, "name": "유기농 오렌지주스", "category": "drinks", "price": 5900, "original_price": 6900, "unit": "1L", "emoji": "🧃", "color": "#fdeede", "stock": 14, "badge": "특가", "description": "착즙 그대로 담은 유기농 오렌지주스."}
+]

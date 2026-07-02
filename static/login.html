@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>로그인 · 마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <div class="login-wrap">
+      <div class="login-card" data-testid="login-card">
+        <h1>로그인</h1>
+        <div class="field">
+          <label for="username">아이디</label>
+          <input type="text" id="username" data-testid="login-username"
+                 autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" data-testid="login-password"
+                 autocomplete="current-password" />
+        </div>
+        <button class="btn btn-primary" id="login-submit" data-testid="login-submit">로그인</button>
+        <p class="login-error" id="login-error" data-testid="login-error" role="alert" aria-live="assertive"></p>
+        <div class="login-hint">데모 계정 — 아이디 <b>demo</b> / 비밀번호 <b>demo1234</b></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const next = params.get("next") || "/";
+
+    async function doLogin() {
+      document.querySelector("#login-error").textContent = "";
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.querySelector("#username").value,
+          password: document.querySelector("#password").value,
+        }),
+      });
+      if (res.ok) {
+        window.location.href = next;  // 성공 → 원래 가려던 곳으로
+      } else {
+        const data = await res.json().catch(() => ({}));
+        document.querySelector("#login-error").textContent =
+          data.detail || "로그인에 실패했습니다.";
+      }
+    }
+
+    document.querySelector("#login-submit").addEventListener("click", doLogin);
+    document.querySelector("#password").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doLogin();
+    });
+
+    initHeader();
+  </script>
+</body>
+</html>
