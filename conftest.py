@@ -23,9 +23,9 @@ from utilities.File_read import Filereadutil
 BASE_URL = "http://127.0.0.1:8000"
 
 # 경로 계산은 utilities 공통 유틸로 위임 (프로젝트 루트 기준 절대경로)
-_files = Filereadutil()
-ROOT = Path(_files.read_filepath("", ""))
-LOG_PATH = Path(_files.read_filepath("", "uvicorn_test.log"))
+files = Filereadutil()
+ROOT = Path(files.read_filepath("", ""))
+LOG_PATH = Path(files.read_filepath("", "uvicorn_test.log"))
 
 
 def server_up() -> bool:
@@ -81,6 +81,7 @@ def base_url(live_server):
 
 @pytest.fixture(autouse=True)
 def reset(live_server):
+    # 각 테스트 전에 상태 초기화 → 순서/병렬에 안전
     httpx.post(f"{live_server}/api/reset", timeout=2)
 
 
@@ -90,6 +91,19 @@ def api(playwright, live_server):
     yield ctx
     ctx.dispose()
 
+
+@pytest.fixture(autouse=True)
+def inject_class_fixtures(request):
+    """
+        클래스 기반 테스트에 self.page / self.api / self.base_url 을 주입.
+        - 클래스 테스트일 때만 page/api 를 끌어오므로(getfixturevalue),
+          함수형/순수 API 테스트는 불필요하게 브라우저를 띄우지 않는다.
+    """
+    if request.cls is not None:
+        request.cls.page = request.getfixturevalue("page")
+        request.cls.api = request.getfixturevalue("api")
+        request.cls.base_url = request.getfixturevalue("base_url")
+    yield
 
 # 페이지 객체는 픽스처로 리턴하지 않는다.
 # 테스트에서 `HomePage(page, base_url)` 처럼 직접 생성하고,
