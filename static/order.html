@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>주문서 · 마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <h1 class="section-title" style="margin-top:0">주문서</h1>
+
+    <div class="loading" id="loading" data-testid="loading">
+      <span class="spinner" aria-hidden="true"></span> 불러오는 중…
+    </div>
+
+    <div class="empty hidden" id="empty" data-testid="order-empty">
+      <p>주문할 상품이 없습니다.</p>
+      <a class="btn btn-outline" href="/" style="display:inline-block;margin-top:1rem">쇼핑하러 가기</a>
+    </div>
+
+    <div id="order-body" class="order-layout hidden" data-testid="order-body">
+      <section>
+        <h2 class="order-heading">배송지 정보</h2>
+        <div class="field">
+          <label for="recipient">받는 사람</label>
+          <input type="text" id="recipient" data-testid="order-recipient" autocomplete="name" />
+          <p class="error" id="recipient-error" data-testid="recipient-error" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="phone">연락처</label>
+          <input type="text" id="phone" data-testid="order-phone" inputmode="numeric"
+                 placeholder="숫자만 입력" autocomplete="tel" />
+          <p class="error" id="phone-error" data-testid="phone-error" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="address">주소</label>
+          <input type="text" id="address" data-testid="order-address" autocomplete="street-address" />
+          <p class="error" id="address-error" data-testid="address-error" role="alert"></p>
+        </div>
+        <div class="field">
+          <label for="request">배송 요청사항 (선택)</label>
+          <input type="text" id="request" data-testid="order-request" placeholder="예: 문 앞에 놓아주세요" />
+        </div>
+
+        <h2 class="order-heading">결제수단</h2>
+        <div class="pay-methods" role="radiogroup" aria-label="결제수단">
+          <label class="pay-option">
+            <input type="radio" name="pay" value="card" data-testid="pay-card" checked /> 신용카드
+          </label>
+          <label class="pay-option">
+            <input type="radio" name="pay" value="bank" data-testid="pay-bank" /> 무통장입금
+          </label>
+          <label class="pay-option">
+            <input type="radio" name="pay" value="easy" data-testid="pay-easy" /> 간편결제
+          </label>
+        </div>
+      </section>
+
+      <aside>
+        <h2 class="order-heading">주문 상품</h2>
+        <div id="order-items" data-testid="order-items"></div>
+
+        <div class="summary" data-testid="order-summary">
+          <div class="line"><span>상품금액</span><span data-testid="order-subtotal" id="subtotal"></span></div>
+          <div class="line"><span>배송비</span><span data-testid="order-shipping" id="shipping"></span></div>
+          <div class="line total"><span>결제금액</span><span data-testid="order-total" id="total"></span></div>
+        </div>
+
+        <button class="btn btn-primary" id="place-order" data-testid="place-order"
+                style="width:100%;margin-top:1.25rem;padding:1rem">결제하기</button>
+      </aside>
+    </div>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    function itemHTML(it) {
+      return `
+        <div class="order-item" data-testid="order-item">
+          <div class="ci-thumb" style="background:${it.color}"><span aria-hidden="true">${it.emoji}</span></div>
+          <div>
+            <div class="ci-name">${it.name}</div>
+            <div class="ci-unit">${it.unit} · ${it.qty}개</div>
+          </div>
+          <div class="ci-line">${won(it.line_total)}</div>
+        </div>`;
+    }
+
+    async function load() {
+      const res = await fetch("/api/cart");
+      const data = await res.json();
+      document.querySelector("#loading").classList.add("hidden");
+
+      if (data.items.length === 0) {
+        document.querySelector("#empty").classList.remove("hidden");
+        return;
+      }
+      document.querySelector("#order-body").classList.remove("hidden");
+      document.querySelector("#order-items").innerHTML = data.items.map(itemHTML).join("");
+      document.querySelector("#subtotal").textContent = won(data.subtotal);
+      document.querySelector("#shipping").textContent =
+        data.shipping === 0 ? "무료" : won(data.shipping);
+      document.querySelector("#total").textContent = won(data.total);
+    }
+
+    function validate() {
+      let ok = true;
+      const checks = [
+        ["#recipient", "#recipient-error"],
+        ["#phone", "#phone-error"],
+        ["#address", "#address-error"],
+      ];
+      for (const [input, err] of checks) {
+        const empty = !document.querySelector(input).value.trim();
+        document.querySelector(err).textContent = empty ? "필수 입력 항목입니다." : "";
+        if (empty) ok = false;
+      }
+      return ok;
+    }
+
+    document.querySelector("#place-order").addEventListener("click", async () => {
+      if (!validate()) return;
+      const payment = document.querySelector('input[name="pay"]:checked').value;
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipient_name: document.querySelector("#recipient").value.trim(),
+          phone: document.querySelector("#phone").value.trim(),
+          address: document.querySelector("#address").value.trim(),
+          delivery_request: document.querySelector("#request").value.trim(),
+          payment_method: payment,
+        }),
+      });
+      if (res.status === 201) {
+        const order = await res.json();
+        window.location.href = `/order/complete/${order.order_id}`;
+      } else {
+        toast("주문에 실패했습니다.", "err");
+      }
+    });
+
+    initHeader();
+    load();
+  </script>
+</body>
+</html>

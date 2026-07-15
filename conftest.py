@@ -1,11 +1,10 @@
 import subprocess
 import sys
 import time
-from pathlib import Path
-
 import httpx
 import pytest
-
+from pathlib import Path
+from playwright.sync_api import expect
 from utilities.File_read import Filereadutil
 
 """
@@ -97,13 +96,30 @@ def inject_class_fixtures(request):
     """
         클래스 기반 테스트에 self.page / self.api / self.base_url 을 주입.
         - 클래스 테스트일 때만 page/api 를 끌어오므로(getfixturevalue),
-          함수형/순수 API 테스트는 불필요하게 브라우저를 띄우지 않는다.
+        함수형/순수 API 테스트는 불필요하게 브라우저를 띄우지 않는다.
     """
     if request.cls is not None:
         request.cls.page = request.getfixturevalue("page")
         request.cls.api = request.getfixturevalue("api")
         request.cls.base_url = request.getfixturevalue("base_url")
+
     yield
+
+@pytest.fixture(autouse=True)
+def auto_start_at_home(request):
+    """@pytest.mark.ui_journey 를 붙인 클래스만 자동으로 홈에 진입시킨다.
+
+    - UI 여정 테스트: 인자 없이도 홈에서 시작 (Selenium 의 driver.get 처럼).
+    - API/그 외 테스트: 마커가 없으므로 홈 진입도, 브라우저도 뜨지 않는다.
+    - 스피너가 사라지는 순간의 레이스를 피하려고 '상품 카드가 보일 때까지' 대기.
+    """
+    if request.node.get_closest_marker("ui_journey"):
+        page = request.getfixturevalue("page")
+        base_url = request.getfixturevalue("base_url")
+        page.goto(base_url)  # 홈으로 진입 (= driver.get)
+
+    yield
+
 
 # 페이지 객체는 픽스처로 리턴하지 않는다.
 # 테스트에서 `HomePage(page, base_url)` 처럼 직접 생성하고,

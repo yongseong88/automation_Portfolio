@@ -20,13 +20,12 @@ from __future__ import annotations
 import asyncio
 import secrets
 from copy import deepcopy
-from fastapi import FastAPI, HTTPException, Query
+from datetime import datetime            # ← [수정②] import datetime → from datetime import datetime
+from fastapi import Cookie, FastAPI, HTTPException, Query, Response  # ← [수정⑤] 중복 import 정리
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from utilities.File_read import Filereadutil
-from fastapi import Cookie, FastAPI, HTTPException, Query, Response
-
 
 
 app = FastAPI(title="Market Fresh Demo API", version="2.0.0")
@@ -55,6 +54,10 @@ USERS = {
 # 활성 세션: {token: username}
 _sessions: dict[str, str] = {}
 
+# 주문: 서버에 저장되는 주문 목록 (로그인 사용자는 user 로 귀속)
+orders: list[dict] = []
+order_seq: int = 0
+
 
 # --- 모델 ------------------------------------------------------------------
 class CartAddIn(BaseModel):
@@ -65,9 +68,18 @@ class CartAddIn(BaseModel):
 class CartUpdateIn(BaseModel):
     qty: int = Field(ge=1, le=99)
 
+
 class LoginIn(BaseModel):
     username: str = Field(min_length=1)
     password: str = Field(min_length=1)
+
+
+class OrderIn(BaseModel):
+    recipient_name: str = Field(min_length=1, max_length=40)
+    phone: str = Field(min_length=1, max_length=20)
+    address: str = Field(min_length=1, max_length=200)
+    delivery_request: str = Field(default="", max_length=200)
+    payment_method: str = Field(default="card", pattern="^(card|bank|easy)$")
 
 
 # --- 헬퍼 ------------------------------------------------------------------
@@ -82,13 +94,12 @@ def serialize(p: dict) -> dict:
         out["discount_pct"] = round(
             (p["original_price"] - p["price"]) / p["original_price"] * 100
         )
-
     else:
         out["discount_pct"] = 0
 
     out["sold_out"] = p["stock"] == 0
-
     return out
+
 
 def cart_summary() -> dict:
     items = []
@@ -139,6 +150,26 @@ def page_login():
     return FileResponse(files.read_filepath("static", "login.html"))
 
 
+@app.get("/order", include_in_schema=False)
+def page_order():
+    return FileResponse(files.read_filepath("static", "order.html"))
+
+
+@app.get("/order/complete/{order_id}", include_in_schema=False)
+def page_order_complete(order_id: int):
+    return FileResponse(files.read_filepath("static", "order_complete.html"))
+
+
+@app.get("/mypage", include_in_schema=False)
+def page_mypage():
+    return FileResponse(files.read_filepath("static", "mypage.html"))
+
+
+@app.get("/mypage/orders", include_in_schema=False)   # ← [수정④] 빠져있던 주문내역 라우트 추가
+def page_orders():
+    return FileResponse(files.read_filepath("static", "orders.html"))
+
+
 # --- 라우트: API -----------------------------------------------------------
 @app.get("/api/health")
 def health() -> dict:
@@ -147,9 +178,12 @@ def health() -> dict:
 
 @app.post("/api/reset")
 def reset_state() -> dict:
-    global products
+    global products, order_seq            # ← [수정③] order_seq 도 초기화 대상
     products = deepcopy(SEED_PRODUCTS)
     cart.clear()
+    _sessions.clear()                     # ← [수정③] 세션 초기화
+    orders.clear()                        # ← [수정③] 주문 초기화
+    order_seq = 0                         # ← [수정③] 주문 시퀀스 초기화
     return {"reset": True, "products": len(products)}
 
 
@@ -159,7 +193,6 @@ def current_user(session: str | None = Cookie(default=None)) -> str | None:
     if session and session in _sessions:
         return _sessions[session]
     return None
-
 
 
 @app.post("/api/login")
@@ -187,6 +220,59 @@ def me(session: str | None = Cookie(default=None)) -> dict:
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return {"username": user}
+
+
+# --- 라우트: 주문 ----------------------------------------------------------
+@app.post("/api/orders", status_code=201)
+def create_order(payload: OrderIn, session: str | None = Cookie(default=None)) -> dict:
+    summary = cart_summary()
+    if not summary["items"]:
+        raise HTTPException(status_code=409, detail="장바구니가 비어 있습니다.")
+
+    global order_seq                       # ← [수정①] _order_seq → order_seq (선언과 이름 일치)
+    order_seq += 1
+    order = {
+        "order_id": order_seq,
+        "order_no": f"ORD-{order_seq:05d}",
+        "user": current_user(session),     # 비회원이면 None
+        "items": summary["items"],
+        "subtotal": summary["subtotal"],
+        "shipping": summary["shipping"],
+        "total": summary["total"],
+        "recipient_name": payload.recipient_name,
+        "phone": payload.phone,
+        "address": payload.address,
+        "delivery_request": payload.delivery_request,
+        "payment_method": payload.payment_method,
+        "created_at": datetime.now().isoformat(timespec="seconds"),  # ← [수정②] datetime.now() 정상 동작
+        "status": "결제완료",
+    }
+    orders.append(order)
+    cart.clear()  # 주문 후 장바구니 비움
+    return order
+
+
+@app.get("/api/orders")
+def list_orders(session: str | None = Cookie(default=None)) -> dict:
+    """로그인 사용자의 주문 목록(최신순). 미로그인은 401."""
+    user = current_user(session)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    mine = sorted(
+        (o for o in orders if o["user"] == user),
+        key=lambda o: o["order_id"],
+        reverse=True,
+    )
+    return {"items": mine, "count": len(mine)}
+
+
+@app.get("/api/orders/{order_id}")
+def get_order(order_id: int) -> dict:
+    for o in orders:
+        if o["order_id"] == order_id:
+            return o
+    raise HTTPException(status_code=404, detail="Order not found")
+
 
 @app.get("/api/categories")
 def list_categories() -> dict:

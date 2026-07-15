@@ -5,10 +5,10 @@
 """
 
 from .base_page import BasePage
-from .home_page import HomePage
-from .category_page import CategoryPage
-from .product_page import ProductPage
-from .cart_page import CartPage
+from pages.home.home_page import HomePage
+from pages.category.category_page import CategoryPage
+from pages.products.product_page import ProductPage
+from pages.cart.cart_page import CartPage
 from .cart_api import CartApi
 from .login_page import LoginPage
 from .auth_api import AuthApi

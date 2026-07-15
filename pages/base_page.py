@@ -52,7 +52,7 @@ class BasePage:
             logger.exception("요소 찾기 실패: %s", locator)
             raise
 
-    def get_element_by_locator(self, locator: Locator) -> None:
+    def get_element_by_locator(self, locator: str) -> Locator:
         """요소 클릭. (Playwright 가 클릭 가능 상태까지 자동 대기 후 클릭)"""
         try:
             get_locator = self.page.locator(locator)
@@ -62,16 +62,7 @@ class BasePage:
             logger.exception("click 실패: %s", locator)
             raise
 
-    def click(self, locator: Locator) -> None:
-        """요소 클릭. (Playwright 가 클릭 가능 상태까지 자동 대기 후 클릭)"""
-        try:
-            locator.click()
-
-        except Exception:
-            logger.exception("click 실패: %s", locator)
-            raise
-
-    def is_displayed(self, locator: Locator, timeout: float = 3000) -> bool:
+    def is_displayed(self, locator: str, timeout: float = 3000) -> bool:
         """요소가 화면에 보이는지 여부.
 
         timeout(ms) 동안 나타나기를 기다렸다가, 끝내 안 보이면 False 를 반환한다.
@@ -84,45 +75,60 @@ class BasePage:
         except AssertionError:
             return False
 
-    def input_text(self, locator: Locator, text: str) -> None:
+    def input_text(self, locator: str, text: str) -> None:
         """텍스트 입력(기존 값을 지우고 새로 채움)."""
         try:
-            self.get_element_by_id(locator).fill(text)
+            self.get_element_by_locator(locator).fill(text)
+            # self.get_element_by_id(locator).fill(text)
 
         except Exception:
             logger.exception("input_text 실패: %s", locator)
             raise
 
-    def press_key(self, locator: Locator, key: str) -> None:
+    def press_key(self, locator: str, key: str) -> None:
         """키 입력. 예: 'Enter', 'Space', 'Escape', 'Tab'."""
         try:
-            self.get_element_by_id(locator).press(key)
+            self.get_element_by_locator(locator).press(key)
+            # self.get_element_by_id(locator).press(key)
 
         except Exception:
             logger.exception("press_key(%s) 실패: %s", key, locator)
             raise
 
 
-    def wait_visible(self, locator: Locator, timeout: float | None = None):
+    def wait_visible(self, locator: str, timeout: float | None = None):
         """요소가 나타날 때까지 대기(동기화). timeout 은 ms, None 이면 기본값."""
         expect(locator).to_be_visible(timeout=timeout)
-        return self
 
-    def wait_hidden(self, locator: Locator, timeout: float | None = None):
+
+    def wait_hidden(self, locator: str, timeout: float | None = None):
         """요소가 사라질 때까지 대기(동기화). timeout 은 ms, None 이면 기본값."""
         expect(locator).to_be_hidden(timeout=timeout)
-        return self
 
-    def wait_loaded(self, timeout: float | None = None):
-    # def wait_loaded(self, locator: Locator | None = None, timeout: float | None = None):
+
+    def wait_loaded(self, locator, timeout: float | None = None):
         """로딩 스피너가 사라질 때까지 대기.
 
             인자 없이 부르면 공통 스피너(self.loading)를 기다리고,
             페이지마다 다른 로딩 표시가 있으면 그 locator 를 넘긴다.
         """
-        loading_spinner = self.get_element_by_id(L.LOADING)
-        return self.wait_hidden(loading_spinner, timeout=timeout)
+        loading_spinner = self.get_element_by_locator(locator)
+        # self.wait_visible(loading_spinner, timeout)
+        self.wait_hidden(loading_spinner, timeout)
         # return self.wait_hidden(locator or self.loading, timeout=timeout)
+
+
+    def check_url(self, url) -> None:
+        """현재 페이지 URL 이 기대값(문자열/정규식)과 일치하는지 검증."""
+        expect(self.page).to_have_url(url)
+
+    def check_text(self, locator: Locator, text: str) -> None:
+        """요소의 텍스트가 기대값과 일치하는지 검증."""
+        expect(locator).to_have_text(text)
+
+    def check_count(self, locator: Locator, count: int) -> None:
+        """요소의 개수가 기대값과 일치하는지 검증 (0 이면 미노출)."""
+        expect(locator).to_have_count(count)
 
 
     # def open(self, path: str | None = None) -> "BasePage":

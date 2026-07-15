@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마이페이지 · 마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <div class="loading" id="loading" data-testid="loading">
+      <span class="spinner" aria-hidden="true"></span> 불러오는 중…
+    </div>
+
+    <section class="mypage hidden" id="mypage" data-testid="mypage">
+      <h1 class="section-title" style="margin-top:0">마이페이지</h1>
+
+      <div class="profile-box" data-testid="profile-box">
+        <div class="avatar" aria-hidden="true">👤</div>
+        <div>
+          <div class="hello"><b data-testid="mypage-username" id="username"></b> 님</div>
+          <div class="ci-unit">환영합니다</div>
+        </div>
+      </div>
+
+      <nav class="mypage-menu" aria-label="마이페이지 메뉴">
+        <a href="/mypage/orders" class="menu-item" data-testid="orders-link">
+          <span>📦 주문 내역</span><span aria-hidden="true">›</span>
+        </a>
+        <a href="/cart" class="menu-item" data-testid="cart-menu">
+          <span>🛒 장바구니</span><span aria-hidden="true">›</span>
+        </a>
+      </nav>
+    </section>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    async function load() {
+      const res = await fetch("/api/me");
+      if (!res.ok) {
+        window.location.href = "/login?next=/mypage";  // 로그인 필요
+        return;
+      }
+      const me = await res.json();
+      document.querySelector("#loading").classList.add("hidden");
+      document.querySelector("#username").textContent = me.username;
+      document.querySelector("#mypage").classList.remove("hidden");
+    }
+
+    initHeader();
+    load();
+  </script>
+</body>
+</html>

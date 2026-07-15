@@ -1,19 +1,18 @@
 """홈 페이지 UI 테스트 (POM 사용)."""
-
 from playwright.sync_api import Page, expect
-
 from pages import HomePage
+from pages.commons.common_action import Commonaction
 from utilities.api import ProductApi
+import pytest
 
-
-
-class TestHome:# BaseTest 상속 없이도 됨
+@pytest.mark.ui_journey
+class TestHome():# BaseTest 상속 없이도 됨
     def test_home_deal_product_click(self):
         home = HomePage(self.page, self.base_url)
         res = ProductApi(self.api)
 
-        target_product_id = home.deal_product_selected()
-        product_status = res.product_status(target_product_id)
+        target_product_id = home.deal_product_selected()['target_product_code']
+        product_status = res.product_detail(target_product_id)
         print(f"특가 상품 상세 api 응답: {product_status.status}")
 
         assert product_status.status <= 200, "상품 상세 api 호출 실패"
@@ -22,18 +21,18 @@ class TestHome:# BaseTest 상속 없이도 됨
         home = HomePage(self.page, self.base_url)
         res = ProductApi(self.api)
 
-        target_product_id = home.all_product_selected()
-        product_status = res.product_status(target_product_id)
+        target_product_id = home.all_product_selected()['target_product_code']
+        product_status = res.product_detail(target_product_id)
         print(f"전체 상품 상세 api 응답: {product_status.status}")
 
         assert product_status.status <= 200, "상품 상세 api 호출 실패"
 
 
     def test_home_product_search(self):
-        home = HomePage(self.page, self.base_url)
+        common_action = Commonaction(self.page, self.base_url)
         res = ProductApi(self.api)
 
-        search_name = home.product_search()
+        search_name = common_action.product_search()
         search_product_name = res.search_query(search_name)
         print(f"상품 검색 api 응답: {search_product_name.status}")
 

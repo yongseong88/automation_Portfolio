@@ -49,6 +49,7 @@ async function renderAuth() {
   if (res.ok) {
     const me = await res.json();
     area.innerHTML =
+      `<a class="auth-login" href="/mypage" data-testid="mypage-link">마이페이지</a>` +
       `<span class="auth-user" data-testid="auth-user">${me.username}님</span>` +
       `<button class="auth-logout" id="logout-btn" data-testid="logout">로그아웃</button>`;
     document.querySelector("#logout-btn").addEventListener("click", async () => {

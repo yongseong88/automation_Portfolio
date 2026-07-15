@@ -12,6 +12,7 @@
       <a class="logo" href="/" data-testid="logo">마켓프레시</a>
       <input class="search" id="site-search" data-testid="search"
              placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
       <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
         🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
       </a>
@@ -119,7 +120,7 @@
     });
 
     document.querySelector("#checkout").addEventListener("click", () => {
-      toast("데모 환경입니다. 주문은 진행되지 않아요.", "ok");
+      window.location.href = "/order";   // 주문서로 이동 (회원/비회원 모두)
     });
 
     initHeader();

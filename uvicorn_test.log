@@ -1,26 +1,54 @@
-INFO:     Started server process [89495]
+INFO:     Started server process [68945]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:61252 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61253 - "GET /api/health HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61264 - "POST /api/reset HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61265 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61265 - "GET /static/style.css HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61266 - "GET /static/common.js HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61267 - "GET /api/me HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:61266 - "GET /api/categories HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61265 - "GET /api/cart HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61266 - "GET /favicon.ico HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:61268 - "GET /api/products?page_size=50&q= HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61306 - "GET /?q=%EB%AA%A8%EC%A7%9C%EB%A0%90%EB%9D%BC%20%EC%B9%98%EC%A6%88 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61308 - "GET /api/me HTTP/1.1" 401 Unauthorized
-INFO:     127.0.0.1:61306 - "GET /api/categories HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61307 - "GET /api/cart HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61309 - "GET /api/products?page_size=50&q=%EB%AA%A8%EC%A7%9C%EB%A0%90%EB%9D%BC%20%EC%B9%98%EC%A6%88 HTTP/1.1" 200 OK
-INFO:     127.0.0.1:61324 - "GET /api/products/?page_size=50&q=%25EB%25AA%25A8%25EC%25A7%259C%25EB%25A0%2590%25EB%259D%25BC%2520%25EC%25B9%2598%25EC%25A6%2588 HTTP/1.1" 307 Temporary Redirect
-INFO:     127.0.0.1:61325 - "GET /api/products?page_size=50&q=%25EB%25AA%25A8%25EC%25A7%259C%25EB%25A0%2590%25EB%259D%25BC%2520%25EC%25B9%2598%25EC%25A6%2588 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53368 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53369 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53377 - "POST /api/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53379 - "GET /static/common.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET /static/style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53380 - "GET /api/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53379 - "GET /api/cart HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET /api/products?page_size=50&q= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET /category/fruits HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53379 - "GET /api/cart HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53378 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53380 - "GET /api/products?category=fruits&sort=id&order=asc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53386 - "GET /api/products?category=fruits&sort=id&order=asc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53392 - "POST /api/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53393 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53393 - "GET /static/style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53394 - "GET /static/common.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53395 - "GET /api/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53394 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53393 - "GET /api/cart HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53396 - "GET /api/products?page_size=50&q= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53396 - "GET /category/drinks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53396 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53393 - "GET /api/cart HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53395 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53394 - "GET /api/products?category=drinks&sort=id&order=asc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53395 - "GET /api/products?category=drinks&sort=price&order=asc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53386 - "GET /api/products?category=drinks&sort=price&order=asc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53409 - "POST /api/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53410 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53410 - "GET /static/style.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53411 - "GET /static/common.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53412 - "GET /api/me HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:53411 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53410 - "GET /api/cart HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53413 - "GET /api/products?page_size=50&q= HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53413 - "GET /category/drinks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53413 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53410 - "GET /api/cart HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53412 - "GET /api/categories HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53411 - "GET /api/products?category=drinks&sort=id&order=asc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53412 - "GET /api/products?category=drinks&sort=price&order=desc&page_size=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53386 - "GET /api/products?category=drinks&sort=price&order=desc&page_size=50 HTTP/1.1" 200 OK
 INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [89495]
+INFO:     Finished server process [68945]

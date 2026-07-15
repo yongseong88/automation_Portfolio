@@ -18,36 +18,44 @@ class Commondata():
         else:
             return None
 
-    def get_deal_product(self):
-        product_data = self.get_product_info()
-
-        # 특가 상품만 모으기
-        deal_products = [p for p in product_data if p.get("badge") == "특가"]
-
-        if not deal_products:  # 특가가 없을 때 방어
-            return None
-
-        return random.choice(deal_products)["id"]  # 그중 랜덤 하나
-
-    def get_all_product(self):
+    def get_available_product(self):
         product_data = self.get_product_info()
 
         if not product_data:  # 빈 리스트 방어
             return None
 
-        target_product = random.choice(product_data)
+        # 품절(stock == 0) 상품은 담기 불가 → 재고 있는 상품만 후보로
+        available = [p for p in product_data if p.get("stock", 0) > 0]
 
-        target_id = target_product.get("id")
-        target_name = target_product.get("name")
+        if not available:
+            return None
+
+        target_product = random.choice(available)
 
         return {
-            "product_id": target_id,
-            "product_name": target_name
+            "product_id": target_product.get("id"),
+            "product_name": target_product.get("name"),
+            "product_category": target_product.get("category"),
+            "product_stock": target_product.get("stock")
         }
 
-        # return random.choice(product_data)["id"]
 
 
 
-
-
+    # def get_all_product(self):
+    #     product_data = self.get_product_info()
+    #
+    #     if not product_data:  # 빈 리스트 방어
+    #         return None
+    #
+    #     target_product = random.choice(product_data)
+    #
+    #     target_id = target_product.get("id")
+    #     target_name = target_product.get("name")
+    #     target_category = target_product.get("category")
+    #
+    #     return {
+    #         "product_id": target_id,
+    #         "product_name": target_name,
+    #         "product_category": target_category
+    #     }

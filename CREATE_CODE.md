@@ -9,8 +9,12 @@
 ## 🛠️ 2. 컴포넌트별 작성 규칙
 ### [Web UI - Playwright]
 - 반드시 동기식 API(`from playwright.sync_api import Page`)를 사용하세요.
-- Locator는 `page.get_by_test_id()`, `page.get_by_role()`을 최우선으로 사용하세요. (XPath 절대 자제)
+- Locator는 `page.locator()`, `page.get_by_role()`을 최우선으로 사용하세요. (XPath 절대 자제)
 - 하드코딩된 대기(`time.sleep()`)는 금지하며, Playwright의 자동 대기 기능을 신뢰하세요.
+- 클릭, 텍스트 입력, 로딩 대기, 같은 사용자 동작은 base_page에 있는 함수들을 활용 하세요
+- pages에 있는 파일들에 locator 정의 하지 말고 locators 폴더에 있는 locators파일에 있는 locator 정보를 활용하세요.
+- test_로 시작되는 테스트케이스 파일에 직접적으로 사용자 동작 (클릭, 텍스트 확인)은 작성 하지 않고, base_page에 작성하도록 합니다.
+
 
 ### [App UI - Appium]
 - 모바일 환경은 `Accessibility ID`를 최우선 선택자로 지정하세요.

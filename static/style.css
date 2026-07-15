@@ -158,6 +158,61 @@ main { max-width: 1050px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
 .summary .line.total { font-size: 1.15rem; font-weight: 800; border-top: 1px solid var(--line); margin-top: .5rem; padding-top: .75rem; }
 .ship-note { color: var(--purple); font-size: .85rem; margin-top: .25rem; }
 
+/* ---------- 주문서 / 주문완료 / 마이페이지 ---------- */
+.order-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2rem; align-items: start; }
+.order-heading { font-size: 1.05rem; font-weight: 700; margin: 1.5rem 0 .8rem; }
+.order-heading:first-child { margin-top: 0; }
+.pay-methods { display: flex; flex-direction: column; gap: .6rem; }
+.pay-option { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
+.order-item {
+  display: grid; grid-template-columns: 48px 1fr auto; gap: .8rem; align-items: center;
+  padding: .7rem 0; border-bottom: 1px solid var(--line);
+}
+.order-item .ci-thumb { width: 48px; height: 48px; font-size: 1.5rem; }
+@media (max-width: 720px) { .order-layout { grid-template-columns: 1fr; } }
+
+.complete { max-width: 620px; margin: 0 auto; }
+.complete-hero { text-align: center; padding: 1.5rem 0 2rem; }
+.complete-hero .check {
+  width: 64px; height: 64px; margin: 0 auto 1rem; border-radius: 50%;
+  background: var(--purple); color: #fff; font-size: 2rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.complete-hero h1 { margin: 0 0 .5rem; font-size: 1.4rem; }
+.complete-hero .order-no { color: var(--muted); }
+.deliver-box { padding: 1rem; background: var(--section); border-radius: 8px; line-height: 1.7; }
+.complete-actions { display: flex; gap: .75rem; margin-top: 2rem; }
+.complete-actions .btn { flex: 1; }
+
+.mypage { max-width: 620px; }
+.profile-box {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.5rem; background: var(--section); border-radius: 12px; margin-bottom: 1.5rem;
+}
+.profile-box .avatar {
+  width: 56px; height: 56px; border-radius: 50%; background: #fff;
+  display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+}
+.profile-box .hello { font-size: 1.15rem; }
+.mypage-menu { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.menu-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.1rem 1.25rem; border-bottom: 1px solid var(--line); color: var(--ink);
+}
+.menu-item:last-child { border-bottom: 0; }
+.menu-item:hover { background: var(--section); }
+
+.order-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 1.2rem; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1rem; color: var(--ink);
+}
+.order-row:hover { border-color: var(--purple); }
+.order-row-no { display: flex; align-items: center; gap: .6rem; }
+.badge-status {
+  background: var(--section); color: var(--purple); font-size: .75rem; font-weight: 700;
+  padding: .15rem .5rem; border-radius: 4px;
+}
+
 /* ---------- 로그인 ---------- */
 .login-wrap { max-width: 380px; margin: 3rem auto; }
 .login-card {
