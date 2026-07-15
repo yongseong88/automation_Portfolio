@@ -1,0 +1,22 @@
+Utilities/File_read.py
+Utilities/result_pandas.py
+Utilities/configreaderutil.py
+CREATE_CODE.md
+DEBUG_CODE.md
+RUN_TEST.md
+
+# Playwright 트레이스/비디오 아티팩트
+test-results/
+results/
+allure-results/
+allure-report/
+
+# Python 캐시
+__pycache__/
+*.pyc
+
+# 로그
+*.log
+
+# 로컬 실행 스크립트
+run_report.sh

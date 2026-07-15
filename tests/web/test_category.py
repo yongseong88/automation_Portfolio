@@ -10,6 +10,7 @@ import pytest
 @pytest.mark.ui_journey
 class TestCategory():# BaseTest 상속 없이도 됨
 
+    @pytest.mark.regression
     def test_category_click(self):
         """카테고리 선택 후 해당 카테고리 상품 목록 API 응답을 검증한다."""
         # category_page = CategoryPage(self.page, self.base_url)
@@ -27,6 +28,7 @@ class TestCategory():# BaseTest 상속 없이도 됨
         assert all(item["category"] == target_category for item in body["items"]), \
             "선택한 카테고리와 다른 상품이 응답에 포함됨"
 
+    @pytest.mark.regression
     def test_sort_default(self):
         """기본순(id 오름차순) 정렬 후 API 응답의 id 정렬 상태를 검증한다."""
         category = CategoryPage(self.page, self.base_url)
@@ -41,6 +43,7 @@ class TestCategory():# BaseTest 상속 없이도 됨
         ids = [item["id"] for item in response.json()["items"]]
         assert ids == sorted(ids), "id가 오름차순으로 정렬되지 않음"
 
+    @pytest.mark.regression
     def test_sort_price_low(self):
         """낮은 가격순(가격 오름차순) 정렬 후 API 응답의 가격 정렬 상태를 검증한다."""
         category = CategoryPage(self.page, self.base_url)
@@ -55,6 +58,7 @@ class TestCategory():# BaseTest 상속 없이도 됨
         prices = [item["price"] for item in response.json()["items"]]
         assert prices == sorted(prices), "가격이 오름차순으로 정렬되지 않음"
 
+    @pytest.mark.regression
     def test_sort_price_high(self):
         """높은 가격순(가격 내림차순) 정렬 후 API 응답의 가격 정렬 상태를 검증한다."""
         category = CategoryPage(self.page, self.base_url)
@@ -69,6 +73,7 @@ class TestCategory():# BaseTest 상속 없이도 됨
         prices = [item["price"] for item in response.json()["items"]]
         assert prices == sorted(prices, reverse=True), "가격이 내림차순으로 정렬되지 않음"
 
+    @pytest.mark.regression
     def test_sort_name(self):
         """이름순(이름 오름차순) 정렬 후 API 응답의 이름 정렬 상태를 검증한다."""
         category = CategoryPage(self.page, self.base_url)

@@ -7,6 +7,8 @@ import pytest
 
 @pytest.mark.ui_journey
 class TestHome():# BaseTest 상속 없이도 됨
+
+    @pytest.mark.regression
     def test_home_deal_product_click(self):
         home = HomePage(self.page, self.base_url)
         res = ProductApi(self.api)
@@ -17,6 +19,7 @@ class TestHome():# BaseTest 상속 없이도 됨
 
         assert product_status.status <= 200, "상품 상세 api 호출 실패"
 
+    @pytest.mark.regression
     def test_home_all_product_click(self):
         home = HomePage(self.page, self.base_url)
         res = ProductApi(self.api)
