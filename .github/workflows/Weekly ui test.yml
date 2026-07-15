@@ -27,8 +27,57 @@ jobs:
       - name: Playwright 브라우저 설치
         run: playwright install --with-deps chromium
 
+      # 트렌드 그래프용 이전 실행 이력 복원 (run_report.sh 1단계와 같은 역할).
+      # key 에 run_id 를 넣어 매번 미스 → restore-keys 로 직전 캐시를 불러오고,
+      # job 끝에 이번 이력을 새 캐시로 저장하는 롤링 방식.
+      - name: 이전 Allure 이력 복원
+        uses: actions/cache@v4
+        with:
+          path: allure-history
+          key: allure-history-${{ github.run_id }}
+          restore-keys: allure-history-
+
+      - name: 이력 연결
+        run: |
+          if [ -d allure-history ]; then
+            mkdir -p allure-results/history
+            cp -r allure-history/. allure-results/history/
+            echo "이전 트렌드 이력 연결됨"
+          else
+            echo "이전 이력 없음 (첫 실행) — 트렌드는 다음 실행부터 쌓임"
+          fi
+
       - name: 테스트 실행 (trace + 영상 녹화)
-        run: pytest --tracing=on --video=on
+        run: pytest --tracing=on --video=on --alluredir=allure-results
+
+      # 아래 스텝들은 테스트가 실패해도 리포트를 남겨야 하므로 always().
+      - name: Java 설치 (Allure CLI 요구사항)
+        if: always()
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Allure CLI 설치
+        if: always()
+        env:
+          ALLURE_VERSION: '2.44.0'   # 로컬(run_report.sh) 과 동일 버전으로 고정
+        run: |
+          curl -sSfL -o allure.tgz \
+            "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz"
+          sudo tar -zxf allure.tgz -C /opt/
+          sudo ln -s "/opt/allure-${ALLURE_VERSION}/bin/allure" /usr/local/bin/allure
+          allure --version
+
+      - name: Allure 리포트 생성
+        if: always()
+        run: allure generate allure-results -o allure-report --clean
+
+      - name: 다음 실행용 이력 저장
+        if: always()
+        run: |
+          rm -rf allure-history
+          cp -r allure-report/history allure-history
 
       - name: 결과 업로드 (trace / 영상 / 스크린샷)
         if: always()          # 테스트가 실패해도 결과물은 반드시 업로드
@@ -37,3 +86,11 @@ jobs:
           name: playwright-results
           path: test-results/
           retention-days: 30  # 주 1회라 넉넉히 보관 (기본 90일까지 가능)
+
+      - name: Allure 리포트 업로드
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report/
+          retention-days: 30
