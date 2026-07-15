@@ -1,0 +1,39 @@
+name: Weekly UI Regression
+
+on:
+  schedule:
+    # ┌ 분  ┌ 시(UTC)  ┌ 일  ┌ 월  ┌ 요일(0=일, 1=월 ... 6=토)
+    # 14   18         *    *    0   →  UTC 일요일 18:14 = 한국시간(KST) 월요일 새벽 03:14
+    - cron: '14 18 * * 0'
+  workflow_dispatch:    # Actions 탭에서 수동 실행(버튼)
+
+jobs:
+  ui-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30      # 무한 대기 방지 (UI 테스트는 멈출 수 있어서 안전장치)
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 파이썬 설치
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: Playwright 브라우저 설치
+        run: playwright install --with-deps chromium
+
+      - name: 테스트 실행 (trace + 영상 녹화)
+        run: pytest --tracing=on --video=on
+
+      - name: 결과 업로드 (trace / 영상 / 스크린샷)
+        if: always()          # 테스트가 실패해도 결과물은 반드시 업로드
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 30  # 주 1회라 넉넉히 보관 (기본 90일까지 가능)
