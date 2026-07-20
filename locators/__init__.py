@@ -11,6 +11,7 @@ from .category_locators import CategoryLocators
 from .product_locators import ProductLocators
 from .cart_locators import CartLocators
 from .login_locators import LoginLocators
+from .order_locators import OrderLocators, OrderCompleteLocators
 
 __all__ = [
     "BaseLocators",
@@ -19,4 +20,6 @@ __all__ = [
     "ProductLocators",
     "CartLocators",
     "LoginLocators",
+    "OrderLocators",
+    "OrderCompleteLocators",
 ]

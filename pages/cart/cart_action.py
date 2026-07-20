@@ -24,6 +24,7 @@ class Cartaction(BasePage):
         random_cnt = random.randint(1, len(cart_items))  # 1~전체 개
         target_items = cart_items[:random_cnt]  # 앞에서 n개
         remove_result = []
+        print(f"target_items 길이: {len(target_items)}")
 
         for target_item in target_items:
             product_code = target_item['cart_in_product_code']

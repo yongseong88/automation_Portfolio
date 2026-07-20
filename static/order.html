@@ -21,7 +21,7 @@
   </header>
 
   <main>
-    <h1 class="section-title" style="margin-top:0">주문서</h1>
+    <h1 class="order-title">주문서</h1>
 
     <div class="loading" id="loading" data-testid="loading">
       <span class="spinner" aria-hidden="true"></span> 불러오는 중…
@@ -33,75 +33,120 @@
     </div>
 
     <div id="order-body" class="order-layout hidden" data-testid="order-body">
-      <section>
-        <h2 class="order-heading">배송지 정보</h2>
-        <div class="field">
-          <label for="recipient">받는 사람</label>
-          <input type="text" id="recipient" data-testid="order-recipient" autocomplete="name" />
-          <p class="error" id="recipient-error" data-testid="recipient-error" role="alert"></p>
-        </div>
-        <div class="field">
-          <label for="phone">연락처</label>
-          <input type="text" id="phone" data-testid="order-phone" inputmode="numeric"
-                 placeholder="숫자만 입력" autocomplete="tel" />
-          <p class="error" id="phone-error" data-testid="phone-error" role="alert"></p>
-        </div>
-        <div class="field">
-          <label for="address">주소</label>
-          <input type="text" id="address" data-testid="order-address" autocomplete="street-address" />
-          <p class="error" id="address-error" data-testid="address-error" role="alert"></p>
-        </div>
-        <div class="field">
-          <label for="request">배송 요청사항 (선택)</label>
-          <input type="text" id="request" data-testid="order-request" placeholder="예: 문 앞에 놓아주세요" />
-        </div>
+      <div class="order-main">
+        <!-- 주문자 정보 -->
+        <section class="order-card">
+          <h2 class="order-card-title">주문자 정보</h2>
+          <div class="field">
+            <label for="orderer-name">이름</label>
+            <input type="text" id="orderer-name" data-testid="orderer-name" autocomplete="name" />
+            <p class="error" id="orderer-name-error" data-testid="orderer-name-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="orderer-phone">연락처</label>
+            <input type="text" id="orderer-phone" data-testid="orderer-phone" inputmode="numeric"
+                   placeholder="숫자만 입력" autocomplete="tel" />
+            <p class="error" id="orderer-phone-error" data-testid="orderer-phone-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="orderer-email">이메일</label>
+            <input type="email" id="orderer-email" data-testid="orderer-email"
+                   placeholder="example@marketfresh.com" autocomplete="email" />
+            <p class="error" id="orderer-email-error" data-testid="orderer-email-error" role="alert"></p>
+          </div>
+        </section>
 
-        <h2 class="order-heading">결제수단</h2>
-        <div class="pay-methods" role="radiogroup" aria-label="결제수단">
-          <label class="pay-option">
-            <input type="radio" name="pay" value="card" data-testid="pay-card" checked /> 신용카드
-          </label>
-          <label class="pay-option">
-            <input type="radio" name="pay" value="bank" data-testid="pay-bank" /> 무통장입금
-          </label>
-          <label class="pay-option">
-            <input type="radio" name="pay" value="easy" data-testid="pay-easy" /> 간편결제
-          </label>
-        </div>
-      </section>
+        <!-- 배송지 정보 -->
+        <section class="order-card">
+          <h2 class="order-card-title">배송지 정보</h2>
+          <div class="field">
+            <label for="recipient">받는 사람</label>
+            <input type="text" id="recipient" data-testid="order-recipient" autocomplete="name" />
+            <p class="error" id="recipient-error" data-testid="recipient-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="phone">연락처</label>
+            <input type="text" id="phone" data-testid="order-phone" inputmode="numeric"
+                   placeholder="숫자만 입력" autocomplete="tel" />
+            <p class="error" id="phone-error" data-testid="phone-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="address">주소</label>
+            <input type="text" id="address" data-testid="order-address" autocomplete="street-address" />
+            <p class="error" id="address-error" data-testid="address-error" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="request">배송 요청사항 <span class="field-optional">선택</span></label>
+            <input type="text" id="request" data-testid="order-request" placeholder="예: 문 앞에 놓아주세요" />
+          </div>
+        </section>
 
-      <aside>
-        <h2 class="order-heading">주문 상품</h2>
-        <div id="order-items" data-testid="order-items"></div>
+        <!-- 주문 상품 -->
+        <section class="order-card">
+          <h2 class="order-card-title">주문 상품</h2>
+          <div id="order-items" data-testid="order-items"></div>
+        </section>
 
-        <div class="summary" data-testid="order-summary">
-          <div class="line"><span>상품금액</span><span data-testid="order-subtotal" id="subtotal"></span></div>
-          <div class="line"><span>배송비</span><span data-testid="order-shipping" id="shipping"></span></div>
-          <div class="line total"><span>결제금액</span><span data-testid="order-total" id="total"></span></div>
-        </div>
+        <!-- 결제수단 -->
+        <section class="order-card">
+          <h2 class="order-card-title">결제수단</h2>
+          <div class="pay-methods" role="radiogroup" aria-label="결제수단">
+            <label class="pay-option">
+              <input type="radio" name="pay" value="card" data-testid="pay-card" checked />
+              <span>신용카드</span>
+            </label>
+            <label class="pay-option">
+              <input type="radio" name="pay" value="bank" data-testid="pay-bank" />
+              <span>무통장입금</span>
+            </label>
+            <label class="pay-option">
+              <input type="radio" name="pay" value="easy" data-testid="pay-easy" />
+              <span>간편결제</span>
+            </label>
+          </div>
+        </section>
 
-        <button class="btn btn-primary" id="place-order" data-testid="place-order"
-                style="width:100%;margin-top:1.25rem;padding:1rem">결제하기</button>
-      </aside>
+        <!-- 결제 금액 정보 -->
+        <section class="order-card">
+          <h2 class="order-card-title">결제 금액</h2>
+          <div class="summary" data-testid="order-summary">
+            <div class="line"><span>상품금액</span><span data-testid="order-subtotal" id="subtotal"></span></div>
+            <div class="line"><span>상품할인</span><span class="discount-amount" data-testid="order-discount" id="discount"></span></div>
+            <div class="line"><span>배송비</span><span data-testid="order-shipping" id="shipping"></span></div>
+            <div class="line total"><span>최종 결제 금액</span><span data-testid="order-total" id="total"></span></div>
+          </div>
+
+          <button class="btn btn-primary place-order-btn" id="place-order" data-testid="place-order">
+            결제하기
+          </button>
+        </section>
+      </div>
     </div>
   </main>
 
   <script src="/static/common.js"></script>
   <script>
     function itemHTML(it) {
+      const hasDiscount = it.original_price && it.original_price > it.price;
+      const priceHTML = hasDiscount
+        ? `<span class="oi-original">${won(it.original_price)}</span>
+           <span class="oi-price">${won(it.price)}</span>`
+        : `<span class="oi-price">${won(it.price)}</span>`;
       return `
         <div class="order-item" data-testid="order-item">
           <div class="ci-thumb" style="background:${it.color}"><span aria-hidden="true">${it.emoji}</span></div>
-          <div>
+          <div class="ci-info">
             <div class="ci-name">${it.name}</div>
             <div class="ci-unit">${it.unit} · ${it.qty}개</div>
+            <div class="oi-prices" data-testid="order-item-price">${priceHTML}</div>
           </div>
           <div class="ci-line">${won(it.line_total)}</div>
         </div>`;
     }
 
     async function load() {
-      const res = await fetch("/api/cart");
+      // 주문서 진입 시 체크아웃 정보를 한 번에 받아옴 (상품/금액/할인/배송비/결제수단)
+      const res = await fetch("/api/checkout");
       const data = await res.json();
       document.querySelector("#loading").classList.add("hidden");
 
@@ -109,9 +154,13 @@
         document.querySelector("#empty").classList.remove("hidden");
         return;
       }
+
       document.querySelector("#order-body").classList.remove("hidden");
       document.querySelector("#order-items").innerHTML = data.items.map(itemHTML).join("");
+      // 금액은 백엔드가 계산해서 내려준 값을 그대로 표시
       document.querySelector("#subtotal").textContent = won(data.subtotal);
+      document.querySelector("#discount").textContent =
+        data.discount_total > 0 ? `-${won(data.discount_total)}` : won(0);
       document.querySelector("#shipping").textContent =
         data.shipping === 0 ? "무료" : won(data.shipping);
       document.querySelector("#total").textContent = won(data.total);
@@ -120,6 +169,9 @@
     function validate() {
       let ok = true;
       const checks = [
+        ["#orderer-name", "#orderer-name-error"],
+        ["#orderer-phone", "#orderer-phone-error"],
+        ["#orderer-email", "#orderer-email-error"],
         ["#recipient", "#recipient-error"],
         ["#phone", "#phone-error"],
         ["#address", "#address-error"],
@@ -128,6 +180,11 @@
         const empty = !document.querySelector(input).value.trim();
         document.querySelector(err).textContent = empty ? "필수 입력 항목입니다." : "";
         if (empty) ok = false;
+      }
+      const email = document.querySelector("#orderer-email").value.trim();
+      if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        document.querySelector("#orderer-email-error").textContent = "이메일 형식이 올바르지 않습니다.";
+        ok = false;
       }
       return ok;
     }
@@ -139,6 +196,9 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          orderer_name: document.querySelector("#orderer-name").value.trim(),
+          orderer_phone: document.querySelector("#orderer-phone").value.trim(),
+          orderer_email: document.querySelector("#orderer-email").value.trim(),
           recipient_name: document.querySelector("#recipient").value.trim(),
           phone: document.querySelector("#phone").value.trim(),
           address: document.querySelector("#address").value.trim(),

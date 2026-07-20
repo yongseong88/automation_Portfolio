@@ -45,6 +45,13 @@
         <div class="line total"><span>결제금액</span><span data-testid="complete-total" id="total"></span></div>
       </div>
 
+      <h2 class="order-heading">주문자 정보</h2>
+      <div class="deliver-box" data-testid="complete-orderer">
+        <div><b id="c-orderer-name"></b></div>
+        <div id="c-orderer-phone" class="ci-unit"></div>
+        <div id="c-orderer-email" class="ci-unit"></div>
+      </div>
+
       <h2 class="order-heading">배송지</h2>
       <div class="deliver-box" data-testid="complete-delivery">
         <div><b id="c-recipient"></b></div>
@@ -67,7 +74,7 @@
       return `
         <div class="order-item" data-testid="complete-item">
           <div class="ci-thumb" style="background:${it.color}"><span aria-hidden="true">${it.emoji}</span></div>
-          <div><div class="ci-name">${it.name}</div><div class="ci-unit">${it.unit} · ${it.qty}개</div></div>
+          <div class="ci-info"><div class="ci-name">${it.name}</div><div class="ci-unit">${it.unit} · ${it.qty}개</div></div>
           <div class="ci-line">${won(it.line_total)}</div>
         </div>`;
     }
@@ -85,6 +92,9 @@
       document.querySelector("#subtotal").textContent = won(o.subtotal);
       document.querySelector("#shipping").textContent = o.shipping === 0 ? "무료" : won(o.shipping);
       document.querySelector("#total").textContent = won(o.total);
+      document.querySelector("#c-orderer-name").textContent = o.orderer_name || "-";
+      document.querySelector("#c-orderer-phone").textContent = o.orderer_phone || "-";
+      document.querySelector("#c-orderer-email").textContent = o.orderer_email || "-";
       document.querySelector("#c-recipient").textContent = o.recipient_name;
       document.querySelector("#c-phone").textContent = o.phone;
       document.querySelector("#c-address").textContent = o.address;

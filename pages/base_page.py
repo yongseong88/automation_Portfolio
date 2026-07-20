@@ -118,13 +118,39 @@ class BasePage:
         # return self.wait_hidden(locator or self.loading, timeout=timeout)
 
 
-    def check_url(self, url) -> None:
-        """현재 페이지 URL 이 기대값(문자열/정규식)과 일치하는지 검증."""
-        expect(self.page).to_have_url(url)
+    # def check_url(self, url) -> None:
+    #     """현재 페이지 URL 이 기대값(문자열/정규식)과 일치하는지 검증."""
+    #     expect(self.page).to_have_url(url)
+    #
+    # def check_text(self, locator: Locator, text: str) -> None:
+    #     """요소의 텍스트가 기대값과 일치하는지 검증."""
+    #     expect(locator).to_have_text(text)
 
-    def check_text(self, locator: Locator, text: str) -> None:
-        """요소의 텍스트가 기대값과 일치하는지 검증."""
-        expect(locator).to_have_text(text)
+    def check_url(self, url, timeout: float = 3000) -> bool:
+        """현재 페이지 URL 이 기대값과 일치하는지 여부.
+
+        테스트에서 assert 로 검증할 때 사용한다.
+        timeout(ms) 동안 기다리므로 이동 직후의 레이스를 견딘다 → flaky 방지.
+        """
+        try:
+            expect(self.page).to_have_url(url, timeout=timeout)
+            return True
+
+        except AssertionError:
+            return False
+
+    def check_text(self, locator: Locator, text: str, timeout: float = 3000) -> bool:
+        """요소의 텍스트가 기대값과 일치하는지 여부.
+
+        테스트에서 assert 로 검증할 때 사용한다.
+        timeout(ms) 동안 기다리므로 비동기 렌더링을 견딘다 → flaky 방지.
+        """
+        try:
+            expect(locator).to_have_text(text, timeout=timeout)
+            return True
+
+        except AssertionError:
+            return False
 
     def check_count(self, locator: Locator, count: int) -> None:
         """요소의 개수가 기대값과 일치하는지 검증 (0 이면 미노출)."""

@@ -34,7 +34,7 @@ class CartPage(BasePage):
         for _ in range(count):
             current += 1
             plus_el.click()
-            self.check_text(qty_el, str(current))
+            assert self.check_text(qty_el, str(current)), f"수량 증가 후 화면 수량이 {current} 로 갱신되지 않음"
 
         return current
 
@@ -59,7 +59,7 @@ class CartPage(BasePage):
         for _ in range(count):
             current -= 1
             minus_el.click()
-            self.check_text(qty_el, str(current))
+            assert self.check_text(qty_el, str(current)), f"수량 감소 후 화면 수량이 {current} 로 갱신되지 않음"
 
         return current
 

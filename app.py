@@ -75,6 +75,12 @@ class LoginIn(BaseModel):
 
 
 class OrderIn(BaseModel):
+    # 주문자 정보 (추가)
+    orderer_name: str = Field(min_length=1, max_length=40)
+    orderer_phone: str = Field(min_length=1, max_length=20)
+    orderer_email: str = Field(min_length=1, max_length=100, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+    # 배송지 (기존)
     recipient_name: str = Field(min_length=1, max_length=40)
     phone: str = Field(min_length=1, max_length=20)
     address: str = Field(min_length=1, max_length=200)
@@ -234,7 +240,14 @@ def create_order(payload: OrderIn, session: str | None = Cookie(default=None)) -
     order = {
         "order_id": order_seq,
         "order_no": f"ORD-{order_seq:05d}",
-        "user": current_user(session),     # 비회원이면 None
+        "user": current_user(session),  # 비회원이면 None
+
+        # ↓↓↓ 이 세 줄 추가 ↓↓↓
+        "orderer_name": payload.orderer_name,
+        "orderer_phone": payload.orderer_phone,
+        "orderer_email": payload.orderer_email,
+        # ↑↑↑ 추가 끝 ↑↑↑
+
         "items": summary["items"],
         "subtotal": summary["subtotal"],
         "shipping": summary["shipping"],
@@ -244,7 +257,7 @@ def create_order(payload: OrderIn, session: str | None = Cookie(default=None)) -
         "address": payload.address,
         "delivery_request": payload.delivery_request,
         "payment_method": payload.payment_method,
-        "created_at": datetime.now().isoformat(timespec="seconds"),  # ← [수정②] datetime.now() 정상 동작
+        "created_at": datetime.now().isoformat(timespec="seconds"),
         "status": "결제완료",
     }
     orders.append(order)
@@ -323,6 +336,31 @@ def get_product(product_id: int) -> dict:
     return serialize(p)
 
 
+@app.get("/api/checkout")
+def checkout() -> dict:
+    """주문서 진입 시 필요한 정보를 한 번에 반환 (컬리 checkout 스타일).
+    운용 중인 항목(상품/금액/할인/배송비/결제수단)만 묶어서 제공.
+    """
+    summary = cart_summary()
+
+    # 상품할인 합계 = Σ(정가 - 할인가) × 수량
+    discount_total = 0
+    for item in summary["items"]:
+        original = item.get("original_price") or 0
+        if original > item["price"]:
+            discount_total += (original - item["price"]) * item["qty"]
+
+    return {
+        "items": summary["items"],
+        "subtotal": summary["subtotal"] + discount_total,   # 정가 기준 상품금액
+        "discount_total": discount_total,                    # 상품할인 합계
+        "shipping": summary["shipping"],
+        "total": summary["total"],                           # 최종 결제 금액
+        "free_shipping_threshold": FREE_SHIPPING_THRESHOLD,
+        "payment_methods": ["card", "bank", "easy"],
+    }
+
+
 @app.get("/api/cart")
 def get_cart() -> dict:
     return cart_summary()
@@ -351,3 +389,6 @@ def update_cart(product_id: int, payload: CartUpdateIn) -> dict:
 def remove_from_cart(product_id: int) -> dict:
     cart.pop(product_id, None)
     return cart_summary()
+
+
+

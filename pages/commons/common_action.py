@@ -23,7 +23,7 @@ class Commonaction(BasePage):
     def logo_selected(self):
         self.get_element_by_locator(self.bl.logo).click()
         self.wait_loaded(self.bl.loading)
-        self.check_url(f"{self.base_url}/")
+        assert self.check_url(f"{self.base_url}/"), "로고 클릭 후 홈으로 이동하지 않음"
         self.wait_products_loaded()
 
 

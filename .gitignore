@@ -3,6 +3,7 @@ Utilities/configreaderutil.py
 CREATE_CODE.md
 DEBUG_CODE.md
 RUN_TEST.md
+config.ini
 
 # Playwright 트레이스/비디오 아티팩트
 test-results/

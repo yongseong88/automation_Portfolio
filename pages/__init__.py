@@ -9,6 +9,7 @@ from pages.home.home_page import HomePage
 from pages.category.category_page import CategoryPage
 from pages.products.product_page import ProductPage
 from pages.cart.cart_page import CartPage
+from pages.order.order_page import OrderPage
 from .cart_api import CartApi
 from .login_page import LoginPage
 from .auth_api import AuthApi
@@ -19,6 +20,7 @@ __all__ = [
     "CategoryPage",
     "ProductPage",
     "CartPage",
+    "OrderPage",
     "CartApi",
     "LoginPage",
     "AuthApi",

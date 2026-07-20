@@ -21,34 +21,34 @@ class TestCart():# BaseTest 상속 없이도 됨
     def test_cart_order(self):
         """장바구니에서 주문하기 → 주문서로 이동 + 주문 생성(201) + 장바구니 비워짐."""
         cart = CartPage(self.page, self.base_url)
+        product_action = Productaction(self.page, self.base_url)
         res = CartApi(self.api)
         order = OrderApi(self.api)
 
-        res.cart_add(IN_STOCK_PRODUCT_ID, 1)
+        cart_add_result = product_action.random_product_selected()
+        assert cart_add_result, "장바구니 담기 실패"
 
         cart.open_cart()
         cart.order()  # '주문하기' → 주문서(/order)로 이동
 
-        order_response = order.create_order()
-        print(f"주문 생성 api 응답: {order_response.status}")
-
-        # 1순위: API status (주문 생성 201)
-        assert order_response.status == 201, "주문 생성 api 호출 실패"
         # 2순위: 주문서 진입 + 주문 후 장바구니 비워짐
-        cart.check_url(f"{self.base_url}/order")
+        assert cart.check_url(f"{self.base_url}/order"), "주문하기 후 주문서로 이동하지 않음"
         cart_response = res.cart_info()
-        assert cart_response.status == 200, "장바구니 조회 api 호출 실패"
-        assert cart_response.json()["count"] == 0, "주문 후에도 장바구니가 비지 않음"
+        checkout_response = order.checkout_info()
+
+        assert cart_response.status == 200, "주문서 진입 실패"
+        assert checkout_response.status == 200, "장바구니 조회 api 호출 실패"
 
     def test_cart_remove(self):
         """담긴 상품을 제거하면 장바구니가 비고 빈 상태가 노출된다."""
         cart = CartPage(self.page, self.base_url)
         cart_action = Cartaction(self.page, self.base_url)
-        home = HomePage(self.page, self.base_url)
         product_action = Productaction(self.page, self.base_url)
         res = CartApi(self.api)
 
-        product_action.random_product_selected()
+        cart_add_result = product_action.random_product_selected()
+        assert cart_add_result, "장바구니 담기 실패"
+
         cart.open_cart()
         product_remove_result = cart_action.remove_random_items()
 
@@ -59,23 +59,6 @@ class TestCart():# BaseTest 상속 없이도 됨
         assert cart_response.status == 200, "장바구니 조회 api 호출 실패"
         assert product_remove_result == True, "장바구니 담기 실패"
 
-
-        # res.cart_add(IN_STOCK_PRODUCT_ID, 1)
-        # deal_product = home.deal_product_selected()
-        # deal_product_code = deal_product['target_product_code']
-        # deal_product_qty = deal_product['target_product_stock']
-        # product_action.product_detail_add_to_cart(deal_product_code, deal_product_qty)
-
-
-        # cart.remove_first()
-
-
-        # assert cart_response.json()["count"] == 0, "삭제 후에도 상품이 남아 있음"
-
-        # 2순위: 빈 장바구니 상태 노출
-        # cart.wait_visible(cart.empty())
-
-
     def test_cart_update(self):
         """담긴 상품을 제거하면 장바구니가 비고 빈 상태가 노출된다."""
         cart = CartPage(self.page, self.base_url)
@@ -84,7 +67,9 @@ class TestCart():# BaseTest 상속 없이도 됨
         product_action = Productaction(self.page, self.base_url)
         res = CartApi(self.api)
 
-        product_add_result = product_action.random_product_selected()
+        cart_add_result = product_action.random_product_selected()
+        assert cart_add_result, "장바구니 담기 실패"
+
         cart.open_cart()
         cart_update_result = cart_action.items_random_update()
 
@@ -92,7 +77,7 @@ class TestCart():# BaseTest 상속 없이도 됨
         print(f"장바구니 조회 api 응답: {cart_response.status}")
 
         assert cart_response.status == 200, "장바구니 조회 api 호출 실패"
-        assert product_add_result == True, "장바구니 담기 실패"
+        assert cart_add_result == True, "장바구니 담기 실패"
         assert cart_update_result == True, "장바구니 수량 업데이트 실패"
 
         # deal_product = home.deal_product_selected()

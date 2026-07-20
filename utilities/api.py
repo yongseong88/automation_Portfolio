@@ -125,6 +125,15 @@ class OrderApi:
     def __init__(self, request: APIRequestContext):
         self.request = request
 
+    def checkout_info(self) -> APIResponse:
+        """체크아웃 정보 조회 API 호출 (GET /api/checkout)."""
+        return self.request.get("/api/checkout")
+
+    def get_order(self, order_id: int) -> APIResponse:
+        """생성된 주문 조회 API 호출 (GET /api/orders/{order_id}, 성공 시 200)."""
+        return self.request.get(f"/api/orders/{order_id}")
+
+
     def create_order(
         self,
         recipient_name: str = "테스터",

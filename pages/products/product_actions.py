@@ -2,7 +2,7 @@ import random
 
 from locators import BaseLocators, CategoryLocators
 from pages import BasePage, HomePage, ProductPage
-from playwright.sync_api import Page, Locator
+from playwright.sync_api import Page
 
 from pages.cart.cart_data import Cartdata
 from pages.commons.common_action import Commonaction
@@ -92,7 +92,7 @@ class Productaction(BasePage):
             return True
 
         success = sum(1 for r in add_result if r == "Pass")
-        return success == target_cnt  # 전부 통과하면 True
+        return success == len(add_result)  # 실제 시도한 것들이 전부 통과하면 True
 
     def product_detail_add_to_cart(self, product_code, product_stock):
         """재고 있는 상품 상세로 이동해 담기 버튼 클릭 후 담은 상품 id 반환."""

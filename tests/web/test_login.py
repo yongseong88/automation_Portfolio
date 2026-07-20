@@ -32,8 +32,8 @@ class TestLogin():# BaseTest 상속 없이도 됨
         # 1순위: API status
         assert login_response.status == 200, "로그인 api 호출 실패"
         # 2순위: 페이지 진입 / 텍스트
-        login.check_url(f"{self.base_url}/")
-        login.check_text(login.auth_user(), f"{VALID_ID}님")
+        assert login.check_url(f"{self.base_url}/"), "로그인 후 홈으로 이동하지 않음"
+        assert login.check_text(login.auth_user(), f"{VALID_ID}님"), "헤더에 로그인 사용자명이 노출되지 않음"
 
     def test_login_failure_shows_error_and_stays(self):
         """비밀번호가 틀리면 로그인 페이지에 남고 에러 메시지가 표시된다."""
@@ -49,8 +49,9 @@ class TestLogin():# BaseTest 상속 없이도 됨
         # 1순위: API status (오답 → 401)
         assert login_response.status == 401, "로그인 실패 시 401 이어야 함"
         # 2순위: 에러 텍스트 / 페이지 유지
-        login.check_text(login.error_message(), "아이디 또는 비밀번호가 올바르지 않습니다.")
-        login.check_url(re.compile(r"/login"))
+        assert login.check_text(login.error_message(), "아이디 또는 비밀번호가 올바르지 않습니다."), \
+            "로그인 실패 에러 메시지가 노출되지 않음"
+        assert login.check_url(re.compile(r"/login")), "로그인 실패 후 로그인 페이지가 유지되지 않음"
         login.wait_visible(login.login_card())
 
     def test_logout_returns_to_guest_state(self):
@@ -60,7 +61,7 @@ class TestLogin():# BaseTest 상속 없이도 됨
 
         login.go_to_login()  # 홈 → 헤더 '로그인' 버튼 클릭으로 로그인 페이지 진입
         login.login(VALID_ID, VALID_PW)
-        login.check_text(login.auth_user(), f"{VALID_ID}님")  # 로그인 상태 진입 확인
+        assert login.check_text(login.auth_user(), f"{VALID_ID}님"), "로그아웃 전 로그인 상태 진입 실패"
 
         login.logout()
 
@@ -70,6 +71,6 @@ class TestLogin():# BaseTest 상속 없이도 됨
         # 1순위: API status
         assert logout_response.status == 200, "로그아웃 api 호출 실패"
         # 2순위: 홈 진입 + 비로그인 상태(로그인 링크 노출, 사용자명 사라짐)
-        login.check_url(f"{self.base_url}/")
+        assert login.check_url(f"{self.base_url}/"), "로그아웃 후 홈으로 이동하지 않음"
         login.wait_visible(login.login_link())
         login.check_count(login.auth_user(), 0)
