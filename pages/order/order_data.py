@@ -18,9 +18,9 @@ class Orderdata():
 
 
     def delivery_Information(self):
-        reciver_name = self.read_util.readConfig("delivery", "orderer_name")
-        reciver_phone = self.read_util.readConfig("delivery", "orderer_phone")
-        reciver_address = self.read_util.readConfig("delivery", "orderer_email")
+        reciver_name = self.read_util.readConfig("delivery", "recipient_name")
+        reciver_phone = self.read_util.readConfig("delivery", "recipient_phone")
+        reciver_address = self.read_util.readConfig("delivery", "shippingaddress")
 
         return {"recipient": reciver_name, "delivery_phone": reciver_phone, "address": reciver_address}
 
