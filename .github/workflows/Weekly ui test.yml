@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 파이썬 설치
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
           cache: pip           # requirements.txt 기반 캐시 → 의존성 설치 빨라짐
@@ -32,7 +32,7 @@ jobs:
       # key 에 run_id 를 넣어 매번 미스 → restore-keys 로 직전 캐시를 불러오고,
       # job 끝에 이번 이력을 새 캐시로 저장하는 롤링 방식.
       - name: 이전 Allure 이력 복원
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: allure-history
           key: allure-history-${{ github.run_id }}
@@ -69,7 +69,7 @@ jobs:
       # 아래 스텝들은 테스트가 실패해도 리포트를 남겨야 하므로 always().
       - name: Java 설치 (Allure CLI 요구사항)
         if: always()
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -101,7 +101,7 @@ jobs:
 
       - name: 결과 업로드 (trace / 영상 / 스크린샷)
         if: always()          # 테스트가 실패해도 결과물은 반드시 업로드
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-results
           path: test-results/
@@ -110,7 +110,7 @@ jobs:
 
       - name: Allure 리포트 업로드
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: allure-report
           path: allure-report/
