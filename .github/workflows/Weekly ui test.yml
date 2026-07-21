@@ -49,6 +49,11 @@ jobs:
           fi
 
       - name: 테스트 실행 (regression / trace + 영상 녹화)
+        env:
+          ACCOUNT_VALID_ID: ${{ secrets.ACCOUNT_VALID_ID }}
+          ACCOUNT_VALID_PWD: ${{ secrets.ACCOUNT_VALID_PWD }}
+          ACCOUNT_INVALID_ID: ${{ secrets.ACCOUNT_INVALID_ID }}
+          ACCOUNT_INVALID_PWD: ${{ secrets.ACCOUNT_INVALID_PWD }}
         run: >
           pytest -m regression
           --tracing=on --video=on
