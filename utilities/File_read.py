@@ -7,11 +7,15 @@ from configparser import ConfigParser
 class Filereadutil():
 
     def readConfig(self, section, key):
-        config = ConfigParser()  # 객체 생성
-        # 절대경로 하드코딩 대신 read_filepath 로 프로젝트 루트 기준 경로 계산
-        config_path = self.read_filepath("Config", "config.ini")
-        config.read(config_path)  # ini 파일 읽어오기
-        return config.get(section, key)  # section 과 key 로 value 리턴
+        env_key = f"{section.upper()}_{key.upper()}"
+
+        if env_key in os.environ:  # CI: 환경변수 있으면 그걸 씀
+            return os.environ[env_key]
+
+        # 로컬: 환경변수 없으면 config.ini 읽음
+        config = ConfigParser()
+        config.read(self.read_filepath("Config", "config.ini"))
+        return config.get(section, key)
 
     def write_file(self, input_file_path, file_data):
 

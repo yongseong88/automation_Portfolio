@@ -5,11 +5,10 @@ from __future__ import annotations
 from playwright.sync_api import Page, Locator
 
 from locators import LoginLocators
-from .base_page import BasePage
+from pages.base_page import BasePage
 
 
 class LoginPage(BasePage):
-    PATH = "/login"
 
     def __init__(self, page: Page, base_url: str):
         super().__init__(page, base_url)

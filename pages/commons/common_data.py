@@ -39,6 +39,21 @@ class Commondata():
             "product_stock": target_product.get("stock")
         }
 
+    def account_config(self):
+
+        try:
+
+            return {
+                "valid_id": self.File_read_util.readConfig("Account", f"valid_id"),
+                "valid_pwd": self.File_read_util.readConfig("Account", f"valid_pwd"),
+                "invalid_id": self.File_read_util.readConfig("Account", "invalid_id"),
+                "invalid_pwd": self.File_read_util.readConfig("Account", "invalid_pwd")
+
+            }
+
+        except AssertionError as e:
+            print(f"AssertionError: {e}")
+
 
 
 

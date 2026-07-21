@@ -67,3 +67,6 @@ class Commonaction(BasePage):
             "target_product_code" : target_prd_id,
             "target_product_stock" : target_prd_stock
         }
+
+
+
