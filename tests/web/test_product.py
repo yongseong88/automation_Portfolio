@@ -14,6 +14,7 @@ IN_STOCK_PRODUCT_ID = 1  # 유기농 시금치
 
 @pytest.mark.ui_journey
 class TestProduct():# BaseTest 상속 없이도 됨]
+    @pytest.mark.regression
     def test_home_deal_product_cart_add(self):
         """카테고리 선택 후 해당 카테고리 상품 목록 API 응답을 검증한다."""
         home = HomePage(self.page, self.base_url)
@@ -37,6 +38,7 @@ class TestProduct():# BaseTest 상속 없이도 됨]
         assert target is not None, "담은 상품이 장바구니에 없음"
         assert target["qty"] == added_qty, "담은 수량이 조회 결과와 일치하지 않음"
 
+    @pytest.mark.regression
     def test_home_all_product_cart_add(self):
         """카테고리 선택 후 해당 카테고리 상품 목록 API 응답을 검증한다."""
         home = HomePage(self.page, self.base_url)
@@ -60,6 +62,7 @@ class TestProduct():# BaseTest 상속 없이도 됨]
         assert target is not None, "담은 상품이 장바구니에 없음"
         assert target["qty"] == added_qty, "담은 수량이 조회 결과와 일치하지 않음"
 
+    @pytest.mark.regression
     def test_category_product_cart_add(self):
         """카테고리에서 상품 선택 후 상세에서 담고 장바구니 조회로 담은 수량을 검증한다."""
         category = CategoryPage(self.page, self.base_url)

@@ -18,6 +18,7 @@ IN_STOCK_PRODUCT_ID = 1  # 유기농 시금치 3,900원 (재고 20)
 
 @pytest.mark.ui_journey
 class TestCart():# BaseTest 상속 없이도 됨
+    @pytest.mark.regression
     def test_cart_order(self):
         """장바구니에서 주문하기 → 주문서로 이동 + 주문 생성(201) + 장바구니 비워짐."""
         cart = CartPage(self.page, self.base_url)
@@ -39,6 +40,7 @@ class TestCart():# BaseTest 상속 없이도 됨
         assert cart_response.status == 200, "주문서 진입 실패"
         assert checkout_response.status == 200, "장바구니 조회 api 호출 실패"
 
+    @pytest.mark.regression
     def test_cart_remove(self):
         """담긴 상품을 제거하면 장바구니가 비고 빈 상태가 노출된다."""
         cart = CartPage(self.page, self.base_url)
@@ -59,6 +61,7 @@ class TestCart():# BaseTest 상속 없이도 됨
         assert cart_response.status == 200, "장바구니 조회 api 호출 실패"
         assert product_remove_result == True, "장바구니 담기 실패"
 
+    @pytest.mark.regression
     def test_cart_update(self):
         """담긴 상품을 제거하면 장바구니가 비고 빈 상태가 노출된다."""
         cart = CartPage(self.page, self.base_url)

@@ -16,6 +16,7 @@ from utilities.api import AuthApi
 
 @pytest.mark.ui_journey
 class TestLogin():# BaseTest 상속 없이도 됨
+    @pytest.mark.regression
     def test_login_success_redirects_and_shows_user(self):
         """올바른 계정으로 로그인하면 홈으로 이동하고 헤더에 '{사용자}님'이 표시된다."""
         login_page = LoginPage(self.page, self.base_url)
@@ -37,6 +38,7 @@ class TestLogin():# BaseTest 상속 없이도 됨
         assert login_page.check_url(f"{self.base_url}/"), "로그인 후 홈으로 이동하지 않음"
         assert login_page.check_text(login_page.auth_user(), f"{valid_id}님"), "헤더에 로그인 사용자명이 노출되지 않음"
 
+    @pytest.mark.regression
     def test_login_failure_shows_error_and_stays(self):
         """비밀번호가 틀리면 로그인 페이지에 남고 에러 메시지가 표시된다."""
         login = LoginPage(self.page, self.base_url)
@@ -59,6 +61,8 @@ class TestLogin():# BaseTest 상속 없이도 됨
         assert login.check_url(re.compile(r"/login")), "로그인 실패 후 로그인 페이지가 유지되지 않음"
         login.wait_visible(login.login_card())
 
+
+    @pytest.mark.regression
     def test_logout_returns_to_guest_state(self):
         """로그인 후 로그아웃하면 홈으로 이동하고 헤더가 비로그인(로그인 링크) 상태로 돌아온다."""
         login = LoginPage(self.page, self.base_url)
