@@ -13,9 +13,6 @@ from pages import LoginPage
 from pages.commons.common_data import Commondata
 from utilities.api import AuthApi
 
-VALID_ID = "demo"
-VALID_PW = "demo1234"
-
 
 @pytest.mark.ui_journey
 class TestLogin():# BaseTest 상속 없이도 됨
@@ -23,13 +20,14 @@ class TestLogin():# BaseTest 상속 없이도 됨
         """올바른 계정으로 로그인하면 홈으로 이동하고 헤더에 '{사용자}님'이 표시된다."""
         login_page = LoginPage(self.page, self.base_url)
         res = AuthApi(self.api)
-        common_data = Commondata(self.base_url)
+        account = Commondata(self.base_url).account_config()
+        valid_id = account['valid_id']
+        valid_pwd = account['valid_pwd']
 
         login_page.go_to_login()  # 홈 → 헤더 '로그인' 버튼 클릭으로 로그인 페이지 진입
-        login_page.login(VALID_ID, VALID_PW)
+        login_page.login(valid_id, valid_pwd)
 
-        login_response = res.login(common_data.account_config()['valid_id'], common_data.account_config()['valid_pwd'])
-        # login_response = res.login(VALID_ID, VALID_PW)
+        login_response = res.login(valid_id, valid_pwd)
         print(f"로그인 api 응답: {login_response.status}")
 
         # 1순위: API status
@@ -37,17 +35,20 @@ class TestLogin():# BaseTest 상속 없이도 됨
 
         # 2순위: 페이지 진입 / 텍스트
         assert login_page.check_url(f"{self.base_url}/"), "로그인 후 홈으로 이동하지 않음"
-        assert login_page.check_text(login_page.auth_user(), f"{VALID_ID}님"), "헤더에 로그인 사용자명이 노출되지 않음"
+        assert login_page.check_text(login_page.auth_user(), f"{valid_id}님"), "헤더에 로그인 사용자명이 노출되지 않음"
 
     def test_login_failure_shows_error_and_stays(self):
         """비밀번호가 틀리면 로그인 페이지에 남고 에러 메시지가 표시된다."""
         login = LoginPage(self.page, self.base_url)
         res = AuthApi(self.api)
+        account = Commondata(self.base_url).account_config()
+        valid_id = account['valid_id']
+        invalid_pwd = account['invalid_pwd']
 
         login.go_to_login()  # 홈 → 헤더 '로그인' 버튼 클릭으로 로그인 페이지 진입
-        login.login(VALID_ID, "wrong-password")
+        login.login(valid_id, invalid_pwd)
 
-        login_response = res.login(VALID_ID, "wrong-password")
+        login_response = res.login(valid_id, invalid_pwd)
         print(f"로그인 실패 api 응답: {login_response.status}")
 
         # 1순위: API status (오답 → 401)
@@ -62,10 +63,13 @@ class TestLogin():# BaseTest 상속 없이도 됨
         """로그인 후 로그아웃하면 홈으로 이동하고 헤더가 비로그인(로그인 링크) 상태로 돌아온다."""
         login = LoginPage(self.page, self.base_url)
         res = AuthApi(self.api)
+        account = Commondata(self.base_url).account_config()
+        valid_id = account['valid_id']
+        valid_pwd = account['valid_pwd']
 
         login.go_to_login()  # 홈 → 헤더 '로그인' 버튼 클릭으로 로그인 페이지 진입
-        login.login(VALID_ID, VALID_PW)
-        assert login.check_text(login.auth_user(), f"{VALID_ID}님"), "로그아웃 전 로그인 상태 진입 실패"
+        login.login(valid_id, valid_pwd)
+        assert login.check_text(login.auth_user(), f"{valid_id}님"), "로그아웃 전 로그인 상태 진입 실패"
 
         login.logout()
 
