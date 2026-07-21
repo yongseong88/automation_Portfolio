@@ -54,6 +54,12 @@ jobs:
           ACCOUNT_VALID_PWD: ${{ secrets.ACCOUNT_VALID_PWD }}
           ACCOUNT_INVALID_ID: ${{ secrets.ACCOUNT_INVALID_ID }}
           ACCOUNT_INVALID_PWD: ${{ secrets.ACCOUNT_INVALID_PWD }}
+          DELIVERY_ORDERER_NAME: ${{ secrets.DELIVERY_ORDERER_NAME }}
+          DELIVERY_ORDERER_PHONE: ${{ secrets.DELIVERY_ORDERER_PHONE }}
+          DELIVERY_ORDERER_EMAIL: ${{ secrets.DELIVERY_ORDERER_EMAIL }}
+          DELIVERY_RECIPIENT_NAME: ${{ secrets.DELIVERY_RECIPIENT_NAME }}
+          DELIVERY_RECIPIENT_PHONE: ${{ secrets.DELIVERY_RECIPIENT_PHONE }}
+          DELIVERY_SHIPPINGADDRESS: ${{ secrets.DELIVERY_SHIPPINGADDRESS }}
         run: >
           pytest -m regression
           --tracing=on --video=on
