@@ -129,7 +129,6 @@ class OrderApi:
         """생성된 주문 조회 API 호출 (GET /api/orders/{order_id}, 성공 시 200)."""
         return self.request.get(f"/api/orders/{order_id}")
 
-
     def create_order(
         self,
         recipient_name: str = "테스터",

@@ -11,13 +11,37 @@ from locators import OrderLocators, OrderCompleteLocators, BaseLocators
 from pages.base_page import BasePage
 
 class OrderPage(BasePage):
-    PATH = "/order"
 
     def __init__(self, page: Page, base_url: str):
         super().__init__(page, base_url)
         self.ol = OrderLocators()
         self.ocl = OrderCompleteLocators()
         self.bl = BaseLocators()
+
+    # --- 로그인 상태: 프로필이 텍스트로 표시되는 영역 ---
+    def wait_orderer_view(self):
+        """주문자 정보가 '텍스트 표시' 모드로 노출될 때까지 대기 (로그인 상태에서만 보임)."""
+        self.wait_visible(self.ol.orderer_view)
+
+    def wait_delivery_view(self):
+        """배송지 정보가 '텍스트 표시' 모드로 노출될 때까지 대기 (로그인 상태에서만 보임)."""
+        self.wait_visible(self.ol.delivery_view)
+
+    def view_orderer_info(self) -> dict:
+        """화면에 표시된 주문자 정보(이름/연락처/이메일)를 반환."""
+        return {
+            "name": self.element_by_msg(self.ol.view_orderer_name),
+            "phone": self.element_by_msg(self.ol.view_orderer_phone),
+            "email": self.element_by_msg(self.ol.view_orderer_email),
+        }
+
+    def view_delivery_info(self) -> dict:
+        """화면에 표시된 배송지 정보(받는 사람/주소/연락처)를 반환."""
+        return {
+            "recipient": self.element_by_msg(self.ol.view_recipient),
+            "address": self.element_by_msg(self.ol.view_address),
+            "phone": self.element_by_msg(self.ol.view_phone),
+        }
 
     # -- 주문자 정보
     def input_name(self, name):
@@ -108,6 +132,9 @@ class OrderPage(BasePage):
     def error(self, field: str) -> Locator:
         """필드별 에러 메시지 요소를 반환. field: orderer_name/orderer_phone/orderer_email."""
         return self.get_element_by_locator(self.error_locator(field))
+
+
+
 
 
 

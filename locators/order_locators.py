@@ -24,6 +24,18 @@ class OrderLocators:
     reciver_phone_error = '[data-testid="phone-error"]'
     address_error = '[data-testid="address-error"]'
 
+    # --- 로그인 상태: 입력 폼 대신 프로필이 '텍스트 표시' 모드로 노출된다 ---
+    orderer_view = '[data-testid="orderer-view"]'
+    view_orderer_name = '[data-testid="view-orderer-name"]'
+    view_orderer_phone = '[data-testid="view-orderer-phone"]'
+    view_orderer_email = '[data-testid="view-orderer-email"]'
+
+    delivery_view = '[data-testid="delivery-view"]'
+    view_recipient = '[data-testid="view-recipient"]'
+    view_address = '[data-testid="view-address"]'
+    view_phone = '[data-testid="view-phone"]'
+    addr_change = '[data-testid="addr-change"]'  # '배송지 변경' → 입력 폼으로 전환
+
     # --- 결제수단 (card / bank / easy) ---
     def pay(self, method: str):
         pay_loc = f'[data-testid="pay-{method}"]'

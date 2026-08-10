@@ -41,6 +41,20 @@ class LoginAction(BasePage):
         }
 
 
+    def go_to_login(self, user_id, password) -> bool:
+        """홈 → 로그인 페이지 진입 → 계정 입력 → 로그인 후 상태까지 검증.
+
+        다른 시나리오(주문 등)에서 '로그인된 상태'를 사전 준비로 만들 때 쓴다.
+        UI 로 로그인해야 브라우저 세션 쿠키가 생겨 이후 페이지가 회원 화면으로 뜬다.
+        """
+        self.login_page.go_to_login()
+        self.login_page.set_id(user_id)
+        self.login_page.set_pwd(password)
+        self.login_page.login_submit()
+
+        return self.login_valid_check(user_id)
+
+
     def login_valid_check(self, value) -> bool:
         """로그인 성공 여부 검증 (홈으로 이동 + 헤더에 '{사용자}님' 노출)."""
         # check_url()/check_text() 는 bool 을 돌려주므로 assert 로 실패시키고,

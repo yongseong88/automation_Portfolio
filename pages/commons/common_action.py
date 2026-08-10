@@ -114,8 +114,5 @@ class Commonaction(BasePage):
             logger.exception("상품 클릭 실패: product_id=%r, locator=%s", prd_id, self.bl.all_grid(product_id=prd_id))
             raise
 
-        # logger.info("상품 클릭 성공: product_id=%s, stock=%s", prd_id, target_prd_stock)
-        # return {
-        #     "target_product_code" : prd_id,
-        #     "target_product_stock" : target_prd_stock
-        # }
+
+

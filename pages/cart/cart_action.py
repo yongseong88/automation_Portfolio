@@ -96,8 +96,19 @@ class Cartaction(BasePage):
                 qty_action = self.cart_page.decrease_qty  # - 로 감소
                 direction = "감소"
 
-            for _ in range(diff):
+            # 한 번 누를 때마다 화면 수량이 반영될 때까지 기다린다.
+            # 연타하면 프런트가 갱신 전 값을 읽어 같은 수량을 PATCH → 클릭이 유실된다.
+            step_direction = 1 if target_qty > product_qty else -1
+
+            for step in range(1, diff + 1):
                 qty_action(product_code)
+                step_qty = product_qty + (step * step_direction)
+
+                if not self.cart_page.wait_qty(product_code, step_qty):
+                    logger.warning(
+                        "수량 반영 대기 실패: 상품=%s %s번째 클릭, 기대=%s",
+                        product_code, step, step_qty
+                    )
 
             # ★ API 응답으로 검증 (UI 반환값이 아니라)
             api_qty = self.cart_data.get_qty_from_api(product_code)

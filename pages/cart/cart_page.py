@@ -34,6 +34,16 @@ class CartPage(BasePage):
         self.element_by_click(item_minus_loc)
 
 
+    def wait_qty(self, product_code, expected_qty) -> bool:
+        """화면의 상품 수량이 기대값으로 갱신될 때까지 대기.
+
+        수량 버튼은 '화면에 보이는 수량 +-1' 을 절대값으로 PATCH 한다.
+        → 화면 갱신 전에 다음 클릭이 들어가면 같은 값을 두 번 보내 클릭이 유실된다.
+        연타할 때는 매 클릭마다 이 대기를 걸어야 한다.
+        """
+        return self.check_text(self.cl.item_qty(product_code), str(expected_qty))
+
+
     def item_remove(self, product_code):
         """담긴 첫 상품의 삭제 버튼을 누르고, 빈 장바구니가 노출될 때까지 대기한다."""
 
