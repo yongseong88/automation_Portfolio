@@ -20,45 +20,50 @@ class OrderPage(BasePage):
         self.bl = BaseLocators()
 
     # -- 주문자 정보
-    def name(self, name):
+    def input_name(self, name):
         """주문자 정보 내 이름 입력"""
         self.input_text(self.ol.orderer_name, name)
 
-    def phone(self, phone):
+    def input_phone(self, phone):
         """주문자 정보 내 연락처 입력"""
         self.input_text(self.ol.orderer_phone, phone)
 
-    def email(self, email):
+    def input_email(self, email):
         """주문자 정보 내 이메일 입력"""
         self.input_text(self.ol.orderer_email, email)
 
-
     # -- 배송지 정보
-    def recipient(self, recipient):
+    def input_recipient(self, recipient):
         """배송지 정보 내 받는 사람 입력."""
         self.input_text(self.ol.recipient, recipient)
 
-    def recive_phone(self, recive_phone):
+    def input_recive_phone(self, recive_phone):
         """배송지 정보 내 연락처 입력."""
-        self.input_text(self.ol.phone, recive_phone)
+        self.input_text(self.ol.reciver_phone, recive_phone)
 
-    def address(self, address):
+    def input_address(self, address):
         """배송지 정보 내 주소 입력."""
         self.input_text(self.ol.address, address)
 
-    def delivery_request(self, request: str = ""):
+    def input_delivery_request(self, request: str = ""):
         """배송지 정보 내 요청사항 입력."""
         self.input_text(self.ol.request, request)
 
 
     def select_payment(self, method: str):
         """결제수단 라디오 선택. method: card / bank / easy."""
-        self.get_element_by_locator(self.ol.pay(method)).check()
+        self.element_by_click(self.ol.pay(method))
 
 
     def place_order(self):
         """'결제하기' 버튼 클릭."""
-        self.get_element_by_locator(self.ol.place_order).click()
+        self.element_by_click(self.ol.place_order)
+
+
+
+
+
+
 
 
     # --- 내부: 필드명 → 로케이터 매핑 ---
@@ -68,10 +73,11 @@ class OrderPage(BasePage):
             "orderer_phone": self.ol.orderer_phone,
             "orderer_email": self.ol.orderer_email,
             "recipient": self.ol.recipient,
-            "reciver_phone": self.ol.phone,
+            "reciver_phone": self.ol.reciver_phone,
             "address": self.ol.address,
             "request": self.ol.request,
         }
+
         return mapping[field]
 
 
@@ -79,10 +85,12 @@ class OrderPage(BasePage):
         """지정한 입력 필드의 값을 새로 채운다(빈 문자열이면 비움)."""
         self.input_text(self.input_locator(field), value)
 
-
     def clear_field(self, field: str):
         """지정한 입력 필드를 비운다."""
         self.set_field(field, "")
+
+
+
 
     # --- 검증용 접근자 ---
     def error_locator(self, field: str) -> str:
@@ -110,30 +118,18 @@ class OrderPage(BasePage):
         self.wait_loaded(self.ol.loading)
 
 
-
-
     def fill_delivery(self, recipient: str, phone: str, address: str, request: str = ""):
         """배송지 정보(받는 사람/연락처/주소/요청사항) 입력."""
         self.input_text(self.ol.recipient, recipient)
-        self.input_text(self.ol.phone, phone)
+        self.input_text(self.ol.reciver_phone, phone)
         self.input_text(self.ol.address, address)
 
         if request:
             self.input_text(self.ol.request, request)
 
-
-
-
-
-
-
-
-
-
-
-    def complete_container(self) :
+    def complete_container(self):
         """주문 완료 페이지의 완료 컨테이너 요소."""
-        self.wait_visible(self.get_element_by_locator(self.ocl.container))
+        self.wait_visible(self.ocl.container)
 
 
     def order_id_from_url(self) -> int:

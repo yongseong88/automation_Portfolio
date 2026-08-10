@@ -5,11 +5,8 @@ Playwright APIRequestContext 를 감싸 엔드포인트/페이로드를 한 곳�
 """
 
 from __future__ import annotations
-
 from playwright.sync_api import APIRequestContext, APIResponse
 from urllib.parse import quote
-
-
 
 
 class AuthApi:
@@ -26,7 +23,6 @@ class AuthApi:
 
     def logout(self) -> APIResponse:
         return self.request.post("/api/logout")
-
 
 
 

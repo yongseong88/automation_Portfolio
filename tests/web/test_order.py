@@ -62,8 +62,9 @@ class TestOrder():# BaseTest 상속 없이도 됨
         cart_add_result = product_action.random_product_selected()
         assert cart_add_result, "장바구니 담기 실패"
 
-        cart_page.open_cart()
-        cart_page.order()
+        cart_page.go_to_cart()
+        cart_page.go_to_order()
+
         checkout = order_api.checkout_info().json()  # 주문 직전 스냅샷(상품/금액)
         order_action.fill_orderer()
         order_action.fill_delivery()
@@ -83,8 +84,10 @@ class TestOrder():# BaseTest 상속 없이도 됨
 
         # api 응답값 일치 확인
         assert order_response.status == 200, "주문 조회 api 응답이 200이 아님"
+
         # 주문 상품 일치
         assert [i["id"] for i in ordered["items"]] == [i["id"] for i in checkout["items"]], "주문 상품이 장바구니와 불일치"
+
         # 주문 가격 일치
         assert ordered["total"] == checkout["total"], "주문 결제금액이 장바구니와 불일치"
 
@@ -103,19 +106,20 @@ class TestOrder():# BaseTest 상속 없이도 됨
         cart_add_result = product_action.random_product_selected()
         assert cart_add_result, "장바구니 담기 실패"
 
-        cart_page.open_cart()
-        cart_page.order()
+        cart_page.go_to_cart()
+        cart_page.go_to_order()
         order_action.fill_orderer()
         order_action.fill_delivery()
 
-        order_page.clear_field(field)  # 해당 항목만 비움
+        order_action.clear_field(field)  # 해당 항목만 비움
         order_page.place_order()
 
         # 페이지 이동: 실패 → 현재(/order) 유지
-        assert order_page.check_url(f"{self.base_url}/order"), "주문 실패 후 주문서 페이지가 유지되지 않음"
+        assert order_action.order_valid_check(field), "로그인 실패 후 로그인 페이지 유지 또는 에러 메시지 노출 실패"
 
-        # 에러 노출
-        assert order_page.check_text(order_page.error(field), ERR_REQUIRED), f"{field} 필수 입력 에러 문구가 노출되지 않음"
+
+
+
 
     # # --- 주문 실패: 이메일 형식 오류 (@ 누락 / 도메인 형식 오류) ---
     # @pytest.mark.regression

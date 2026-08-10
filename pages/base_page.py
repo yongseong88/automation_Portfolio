@@ -9,9 +9,9 @@
 from __future__ import annotations
 from playwright.sync_api import Page, Locator, expect
 from locators import BaseLocators as L
-import logging
+from utilities.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class BasePage:
     # 하위 페이지에서 기본 경로를 지정 (예: "/", "/cart")
@@ -20,20 +20,6 @@ class BasePage:
     def __init__(self, page: Page, base_url: str):
         self.page = page
         self.base_url = base_url.rstrip("/")
-
-        # --- 공통 헤더 ---
-        # self.logo: Locator = page.get_by_test_id(L.LOGO)
-        # self.search_box: Locator = page.get_by_test_id(L.SEARCH)
-        # self.cart_link: Locator = page.get_by_test_id(L.CART_LINK)
-        # self.cart_count: Locator = page.get_by_test_id(L.CART_COUNT)
-        # self.cat_nav: Locator = page.get_by_test_id(L.CAT_NAV)
-        #
-        # # 헤더 인증 영역 (로그인 상태에 따라 달라짐)
-        # self.auth_user: Locator = page.get_by_test_id(L.AUTH_USER)
-        # self.login_link: Locator = page.get_by_test_id(L.LOGIN_LINK)
-        # self.logout_btn: Locator = page.get_by_test_id(L.LOGOUT)
-        # # 모든 목록형 페이지가 공유하는 로딩 스피너
-        # self.loading: Locator = page.get_by_test_id(L.LOADING)
 
     # --- 공통 동작 ---
     def open(self, path: str | None = None) -> "BasePage":
@@ -52,15 +38,36 @@ class BasePage:
             logger.exception("요소 찾기 실패: %s", locator)
             raise
 
-    def get_element_by_locator(self, locator: str) -> Locator:
-        """요소 클릭. (Playwright 가 클릭 가능 상태까지 자동 대기 후 클릭)"""
+    def get_element_by_locator(self, locator: str):
+        """selector 로 요소(Locator)를 찾아 반환."""
         try:
             get_locator = self.page.locator(locator)
             return get_locator
 
         except Exception:
+            logger.exception("요소 찾기 실패: %s", locator)
+            raise
+
+    def element_by_click(self, locator: str):
+        """요소 클릭. (Playwright 가 클릭 가능 상태까지 자동 대기 후 클릭)"""
+        try:
+            self.get_element_by_locator(locator).click()
+
+        except Exception:
             logger.exception("click 실패: %s", locator)
             raise
+
+    def element_by_msg(self, locator: str):
+        """요소 내 택스트 추출 """
+        try:
+            msg = self.get_element_by_locator(locator).inner_text()
+            return msg
+
+        except Exception:
+            logger.exception("요소 내 텍스트 출력 실패: %s", locator)
+            raise
+
+
 
     def is_displayed(self, locator: str, timeout: float = 3000) -> bool:
         """요소가 화면에 보이는지 여부.
@@ -96,9 +103,17 @@ class BasePage:
             raise
 
 
-    def wait_visible(self, locator: str, timeout: float | None = None):
-        """요소가 나타날 때까지 대기(동기화). timeout 은 ms, None 이면 기본값."""
-        expect(locator).to_be_visible(timeout=timeout)
+    def wait_visible(self, locator: str, timeout: float | None = None, index: int | None = None):
+        """요소가 나타날 때까지 대기(동기화). timeout 은 ms, None 이면 기본값.
+
+        index 를 주면 n 번째 요소만 대기한다.
+        여러 개에 매칭되는 목록형 로케이터는 index 없이 부르면
+        Playwright strict mode 위반이 나므로 index=0 등을 지정해야 한다.
+        """
+        ele = self.get_element_by_locator(locator)
+        if index is not None:
+            ele = ele.nth(index)
+        expect(ele).to_be_visible(timeout=timeout)
 
 
     def wait_hidden(self, locator: str, timeout: float | None = None):
@@ -117,15 +132,6 @@ class BasePage:
         self.wait_hidden(loading_spinner, timeout)
         # return self.wait_hidden(locator or self.loading, timeout=timeout)
 
-
-    # def check_url(self, url) -> None:
-    #     """현재 페이지 URL 이 기대값(문자열/정규식)과 일치하는지 검증."""
-    #     expect(self.page).to_have_url(url)
-    #
-    # def check_text(self, locator: Locator, text: str) -> None:
-    #     """요소의 텍스트가 기대값과 일치하는지 검증."""
-    #     expect(locator).to_have_text(text)
-
     def check_url(self, url, timeout: float = 3000) -> bool:
         """현재 페이지 URL 이 기대값과 일치하는지 여부.
 
@@ -140,13 +146,14 @@ class BasePage:
             return False
 
     def check_text(self, locator: Locator, text: str, timeout: float = 3000) -> bool:
-        """요소의 텍스트가 기대값과 일치하는지 여부.
-
-        테스트에서 assert 로 검증할 때 사용한다.
-        timeout(ms) 동안 기다리므로 비동기 렌더링을 견딘다 → flaky 방지.
+        """
+            요소의 텍스트가 기대값과 일치하는지 여부.
+            테스트에서 assert 로 검증할 때 사용한다.
+            timeout(ms) 동안 기다리므로 비동기 렌더링을 견딘다 → flaky 방지.
         """
         try:
-            expect(locator).to_have_text(text, timeout=timeout)
+            expect(self.get_element_by_locator(locator)).to_have_text(text, timeout=timeout)
+            # expect(locator).to_have_text(text, timeout=timeout)
             return True
 
         except AssertionError:

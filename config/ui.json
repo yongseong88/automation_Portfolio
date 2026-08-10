@@ -1,0 +1,57 @@
+{
+  "home": {
+    "login_btn": "로그인",
+    "logout_btn": "로그아웃"
+  },
+
+  "login": {
+    "error_invalid": "아이디 또는 비밀번호가 올바르지 않습니다.",
+    "error_failed": "로그인에 실패했습니다.",
+    "required_login": "로그인 필요"
+  },
+
+  "cart": {
+    "add_success": "장바구니에 담았어요",
+    "add_failed": "담기에 실패했습니다.",
+    "empty": "장바구니가 비어있습니다.",
+    "sold_out": "품절",
+    "api_sold_out": "Sold out",
+    "api_not_in_cart": "Not in cart"
+  },
+
+  "order": {
+    "required_field": "필수 입력 항목입니다.",
+    "invalid_email": "이메일 형식이 올바르지 않습니다.",
+    "complete": "주문이 완료되었습니다",
+    "failed": "주문에 실패했습니다.",
+    "empty_items": "주문할 상품이 없습니다.",
+    "api_empty_cart": "장바구니가 비어 있습니다.",
+    "api_not_found": "Order not found"
+  },
+
+  "orders": {
+    "empty": "주문 내역이 없습니다."
+  },
+
+  "product": {
+    "api_not_found": "Product not found",
+    "sold_out": "품절"
+  },
+
+  "common": {
+    "api_unauthorized": "Not authenticated"
+  },
+
+  "signup": {
+    "required_field": "필수 입력 항목입니다.",
+    "username_short": "아이디는 4자 이상이어야 합니다.",
+    "username_duplicate": "이미 사용 중인 아이디입니다.",
+    "password_short": "비밀번호는 8자 이상이어야 합니다.",
+    "password_no_alpha": "비밀번호에 영문이 포함되어야 합니다.",
+    "password_no_special": "비밀번호에 특수문자가 포함되어야 합니다.",
+    "password_mismatch": "비밀번호가 일치하지 않습니다.",
+    "invalid_email": "이메일 형식이 올바르지 않습니다.",
+    "success": "회원가입이 완료되었습니다",
+    "failed": "회원가입에 실패했습니다."
+  }
+}

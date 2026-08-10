@@ -12,10 +12,6 @@ from pages.products.product_data import Productdata
 class ProductPage(BasePage):
     def __init__(self, page: Page, base_url: str):
         super().__init__(page, base_url)
-        # self.detail: Locator = page.get_by_test_id(pl.DETAIL)
-        # self.name: Locator = page.get_by_test_id(pl.NAME)
-        # self.price: Locator = page.get_by_test_id(pl.PRICE)
-        # self.not_found: Locator = page.get_by_test_id(pl.NOT_FOUND)
         self.common_data = Commondata(base_url)
         self.product_data = Productdata(base_url)
         self.common_action = Commonaction(self.page, base_url)

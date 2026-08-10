@@ -19,14 +19,16 @@ class CategoryPage(BasePage):
         self.bl = BaseLocators()
 
         self.product_info = self.common_data.get_available_product()
-        # self.title: Locator = page.get_by_test_id(L.TITLE)
-        # self.sort: Locator = page.get_by_test_id(L.SORT)
-        # self.cards: Locator = page.get_by_test_id(L.PRODUCT_CARD)
-        # self.prices: Locator = page.get_by_test_id(L.PRICE)
+
+    def target_category_click(self):
+        product_category = self.product_info['product_category']
+        target_prd_category = self.common_action.category_selected(product_category)
+        return target_prd_category
+
 
     def default_sort(self):
         """기본순(id 오름차순) 정렬 선택 후 재로딩 대기 (예: 'id:asc')."""
-        target_prd_category = self.common_action.category_selected()
+        target_prd_category = self.target_category_click()
 
         self.get_element_by_locator(self.cl.sort_dropdown).select_option(self.cl.default_sort)
         self.wait_loaded(self.bl.loading)
@@ -35,7 +37,7 @@ class CategoryPage(BasePage):
 
     def price_asc_sort(self):
         """정렬 옵션 선택 후 재로딩 대기 (예: 'price:asc')."""
-        target_prd_category = self.common_action.category_selected()
+        target_prd_category = self.target_category_click()
 
         self.get_element_by_locator(self.cl.sort_dropdown).select_option(self.cl.price_asc)
         self.wait_loaded(self.bl.loading)
@@ -44,7 +46,7 @@ class CategoryPage(BasePage):
 
     def price_desc_sort(self):
         """정렬 옵션 선택 후 재로딩 대기 (예: 'price:desc')."""
-        target_prd_category = self.common_action.category_selected()
+        target_prd_category = self.target_category_click()
 
         self.get_element_by_locator(self.cl.sort_dropdown).select_option(self.cl.price_desc)
         self.wait_loaded(self.bl.loading)
@@ -53,7 +55,7 @@ class CategoryPage(BasePage):
 
     def name_asc_sort(self):
         """정렬 옵션 선택 후 재로딩 대기 (예: 'name:asc')."""
-        target_prd_category = self.common_action.category_selected()
+        target_prd_category = self.target_category_click()
 
         self.get_element_by_locator(self.cl.sort_dropdown).select_option(self.cl.name_asc)
         self.wait_loaded(self.bl.loading)
@@ -62,10 +64,16 @@ class CategoryPage(BasePage):
 
     def category_product_selected(self):
         """ 전체 상품 클릭 """
-        self.common_action.category_selected()
-        target_prd = self.common_action.all_product_selected()
+        product_id = self.product_info['product_id']
+        product_stock = self.product_info['product_stock']
 
-        return target_prd
+        self.target_category_click()
+        self.common_action.all_product_selected(product_id)
+
+        return {
+                "target_product_code": product_id,
+                "target_product_stock": product_stock
+            }
 
 
 
@@ -86,11 +94,9 @@ class CategoryPage(BasePage):
     #     super().open(f"/category/{slug}")
     #     return self
 
-
-
-    def price_values(self) -> list[int]:
-        """화면에 표시된 가격 텍스트('3,900원')를 정수 리스트로 변환."""
-        return [
-            int(t.replace(",", "").replace("원", ""))
-            for t in self.prices.all_inner_texts()
-        ]
+    # def price_values(self) -> list[int]:
+    #     """화면에 표시된 가격 텍스트('3,900원')를 정수 리스트로 변환."""
+    #     return [
+    #         int(t.replace(",", "").replace("원", ""))
+    #         for t in self.prices.all_inner_texts()
+    #     ]

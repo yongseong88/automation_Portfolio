@@ -11,10 +11,10 @@ class TestHome():# BaseTest 상속 없이도 됨
     @pytest.mark.regression
     def test_home_deal_product_click(self):
         home = HomePage(self.page, self.base_url)
-        res = ProductApi(self.api)
+        home_deal_res = ProductApi(self.api)
 
         target_product_id = home.deal_product_selected()['target_product_code']
-        product_status = res.product_detail(target_product_id)
+        product_status = home_deal_res.product_detail(target_product_id)
         print(f"특가 상품 상세 api 응답: {product_status.status}")
 
         assert product_status.status == 200, "상품 상세 api 호출 실패"
@@ -22,24 +22,30 @@ class TestHome():# BaseTest 상속 없이도 됨
     @pytest.mark.regression
     def test_home_all_product_click(self):
         home = HomePage(self.page, self.base_url)
-        res = ProductApi(self.api)
+        home_all_res = ProductApi(self.api)
 
         target_product_id = home.all_product_selected()['target_product_code']
-        product_status = res.product_detail(target_product_id)
+        product_status = home_all_res.product_detail(target_product_id)
         print(f"전체 상품 상세 api 응답: {product_status.status}")
 
         assert product_status.status == 200, "상품 상세 api 호출 실패"
 
     @pytest.mark.regression
     def test_home_product_search(self):
-        common_action = Commonaction(self.page, self.base_url)
+        home = HomePage(self.page, self.base_url)
         res = ProductApi(self.api)
 
-        search_name = common_action.product_search()
+        search_name = home.valid_product_search()
         search_product_name = res.search_query(search_name)
         print(f"상품 검색 api 응답: {search_product_name.status}")
 
         assert search_product_name.status == 200, "검색 api 호출 실패"
+
+
+
+
+
+
 
 
     # def test_home_loads_products(page: Page, base_url: str):

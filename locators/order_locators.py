@@ -15,7 +15,7 @@ class OrderLocators:
 
     # --- 배송지 정보 입력 ---
     recipient = '[data-testid="order-recipient"]'
-    phone = '[data-testid="order-phone"]'
+    reciver_phone = '[data-testid="order-phone"]'
     address = '[data-testid="order-address"]'
     request = '[data-testid="order-request"]'
 
