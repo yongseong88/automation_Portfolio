@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원가입 · 마켓프레시</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="header-row">
+      <a class="logo" href="/" data-testid="logo">마켓프레시</a>
+      <input class="search" id="site-search" data-testid="search"
+             placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
+      <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
+        🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
+      </a>
+    </div>
+    <nav class="cats" id="cat-nav" data-testid="cat-nav" aria-label="카테고리"></nav>
+  </header>
+
+  <main>
+    <div class="signup-wrap">
+      <section class="order-card" data-testid="signup-card">
+        <h1 class="order-card-title">회원가입</h1>
+
+        <div class="field">
+          <label for="username">아이디</label>
+          <input type="text" id="username" data-testid="signup-username"
+                 placeholder="4자 이상" autocomplete="username" />
+          <p class="error" id="username-error" data-testid="username-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" data-testid="signup-password"
+                 placeholder="8자 이상, 영문+특수문자 포함" autocomplete="new-password" />
+          <p class="error" id="password-error" data-testid="password-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="password-confirm">비밀번호 확인</label>
+          <input type="password" id="password-confirm" data-testid="signup-password-confirm"
+                 autocomplete="new-password" />
+          <p class="error" id="password-confirm-error" data-testid="password-confirm-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="name">이름</label>
+          <input type="text" id="name" data-testid="signup-name" autocomplete="name" />
+          <p class="error" id="name-error" data-testid="name-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="phone">연락처</label>
+          <input type="text" id="phone" data-testid="signup-phone"
+                 placeholder="010-0000-0000" autocomplete="tel" />
+          <p class="error" id="phone-error" data-testid="phone-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="email">이메일</label>
+          <input type="email" id="email" data-testid="signup-email"
+                 placeholder="example@marketfresh.com" autocomplete="email" />
+          <p class="error" id="email-error" data-testid="email-error" role="alert"></p>
+        </div>
+
+        <div class="field">
+          <label for="address">주소</label>
+          <input type="text" id="address" data-testid="signup-address" autocomplete="street-address" />
+          <p class="error" id="address-error" data-testid="address-error" role="alert"></p>
+        </div>
+
+        <p class="signup-error" id="signup-error" data-testid="signup-error" role="alert"></p>
+
+        <button class="btn btn-primary signup-btn" id="signup-submit" data-testid="signup-submit">
+          가입하기
+        </button>
+
+        <p class="signup-login-link">
+          이미 계정이 있으신가요?
+          <a href="/login" data-testid="go-login">로그인</a>
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+    const SPECIAL_RE = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/;
+
+    function setError(id, message) {
+      document.querySelector(id).textContent = message;
+      return !message;               // 메시지가 없으면 통과(true)
+    }
+
+    function validate() {
+      let ok = true;
+
+      // 필수 입력 체크
+      const required = [
+        ["#username", "#username-error"],
+        ["#password", "#password-error"],
+        ["#password-confirm", "#password-confirm-error"],
+        ["#name", "#name-error"],
+        ["#phone", "#phone-error"],
+        ["#email", "#email-error"],
+        ["#address", "#address-error"],
+      ];
+      for (const [input, err] of required) {
+        const empty = !document.querySelector(input).value.trim();
+        if (!setError(err, empty ? "필수 입력 항목입니다." : "")) ok = false;
+      }
+      if (!ok) return false;         // 빈 값이 있으면 형식 검사 생략
+
+      // 아이디 4자 이상
+      const username = document.querySelector("#username").value.trim();
+      if (username.length < 4) {
+        setError("#username-error", "아이디는 4자 이상이어야 합니다.");
+        ok = false;
+      }
+
+      // 비밀번호: 8자 이상 + 영문 + 특수문자
+      const password = document.querySelector("#password").value;
+      if (password.length < 8) {
+        setError("#password-error", "비밀번호는 8자 이상이어야 합니다.");
+        ok = false;
+      } else if (!/[A-Za-z]/.test(password)) {
+        setError("#password-error", "비밀번호에 영문이 포함되어야 합니다.");
+        ok = false;
+      } else if (!SPECIAL_RE.test(password)) {
+        setError("#password-error", "비밀번호에 특수문자가 포함되어야 합니다.");
+        ok = false;
+      }
+
+      // 비밀번호 확인 일치
+      const confirm = document.querySelector("#password-confirm").value;
+      if (password !== confirm) {
+        setError("#password-confirm-error", "비밀번호가 일치하지 않습니다.");
+        ok = false;
+      }
+
+      // 이메일 형식
+      const email = document.querySelector("#email").value.trim();
+      if (!EMAIL_RE.test(email)) {
+        setError("#email-error", "이메일 형식이 올바르지 않습니다.");
+        ok = false;
+      }
+
+      return ok;
+    }
+
+    document.querySelector("#signup-submit").addEventListener("click", async () => {
+      document.querySelector("#signup-error").textContent = "";
+      if (!validate()) return;
+
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.querySelector("#username").value.trim(),
+          password: document.querySelector("#password").value,
+          name: document.querySelector("#name").value.trim(),
+          phone: document.querySelector("#phone").value.trim(),
+          email: document.querySelector("#email").value.trim(),
+          address: document.querySelector("#address").value.trim(),
+        }),
+      });
+
+      if (res.status === 201) {
+        toast("회원가입이 완료되었습니다");
+        setTimeout(() => { window.location.href = "/login"; }, 800);
+      } else if (res.status === 409) {
+        const body = await res.json();
+        document.querySelector("#username-error").textContent =
+          body.detail || "이미 사용 중인 아이디입니다.";
+      } else {
+        document.querySelector("#signup-error").textContent = "회원가입에 실패했습니다.";
+      }
+    });
+
+    // 엔터로 제출
+    document.querySelector("#address").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.querySelector("#signup-submit").click();
+    });
+
+    initHeader();
+  </script>
+</body>
+</html>

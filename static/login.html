@@ -34,9 +34,15 @@
           <input type="password" id="password" data-testid="login-password"
                  autocomplete="current-password" />
         </div>
+        <p class="login-signup">
+          아직 아이디가 없으신가요?
+          <span class="login-signup-sep">|</span>
+          <a href="/signup" data-testid="signup-link">회원가입</a>
+        </p>
+
         <button class="btn btn-primary" id="login-submit" data-testid="login-submit">로그인</button>
         <p class="login-error" id="login-error" data-testid="login-error" role="alert" aria-live="assertive"></p>
-        <div class="login-hint">데모 계정 — 아이디 <b>demo</b> / 비밀번호 <b>demo1234</b></div>
+        <div class="login-hint">데모 계정 — 아이디 <b>demo</b> / 비밀번호 <b>demo1234!</b></div>
       </div>
     </div>
   </main>

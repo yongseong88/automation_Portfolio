@@ -11,20 +11,21 @@ QA Harness Demo - E-commerce SUT (컬리 스타일 데모)
 
 설계 의도(자동화 관점):
 - /api/products 는 일부러 지연(latency)을 둬서 "명시적 대기 전략"을 강제
-- /api/reset 으로 테스트마다 상태(상품/장바구니) 초기화 → 테스트 격리
-- 404(없는 상품) / 422(잘못된 수량) / 409(품절) 등 음성 케이스를 명확히 노출
+- /api/reset 으로 테스트마다 상태(상품/장바구니/회원) 초기화 → 테스트 격리
+- 404(없는 상품) / 422(잘못된 수량) / 409(품절·중복가입) 등 음성 케이스를 명확히 노출
 - 장바구니 합계/무료배송 임계값 계산 → 데이터 단언(assertion) 연습용
 """
 
 from __future__ import annotations
 import asyncio
+import re                                # ← [회원가입] 비밀번호 규칙 검증용
 import secrets
 from copy import deepcopy
 from datetime import datetime            # ← [수정②] import datetime → from datetime import datetime
 from fastapi import Cookie, FastAPI, HTTPException, Query, Response  # ← [수정⑤] 중복 import 정리
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator   # ← [회원가입] field_validator 추가
 from utilities.File_read import Filereadutil
 
 
@@ -46,11 +47,27 @@ products: list[dict] = deepcopy(SEED_PRODUCTS)
 cart: dict[int, int] = {}
 
 # --- 로그인 계정 / 세션 ----------------------------------------------------
-# 데모 계정 (username -> password)
-USERS = {
-    "demo": "demo1234",
-    "test": "test1234",
+# 데모 계정 시드 (username -> 프로필). 회원가입 시 USERS 에 추가된다.
+# 비밀번호는 회원가입 규칙(영문+특수문자, 8자 이상)을 데모 계정도 따르도록 맞춤.
+SEED_USERS = {
+    "demo": {
+        "password": "demo1234!",
+        "name": "김데모",
+        "phone": "010-1111-2222",
+        "email": "demo@marketfresh.com",
+        "address": "서울시 강남구 테헤란로 1",
+    },
+    "test": {
+        "password": "test1234!",
+        "name": "이테스트",
+        "phone": "010-3333-4444",
+        "email": "test@marketfresh.com",
+        "address": "서울시 마포구 월드컵로 2",
+    },
 }
+# 실제 사용되는 회원 저장소 (가입 시 여기에 추가됨)
+USERS: dict[str, dict] = deepcopy(SEED_USERS)
+
 # 활성 세션: {token: username}
 _sessions: dict[str, str] = {}
 
@@ -72,6 +89,36 @@ class CartUpdateIn(BaseModel):
 class LoginIn(BaseModel):
     username: str = Field(min_length=1)
     password: str = Field(min_length=1)
+
+
+# 비밀번호에 반드시 포함되어야 하는 특수문자 집합
+SPECIAL_CHARS = r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~`]"
+
+
+class SignupIn(BaseModel):
+    """회원가입 입력.
+
+    - username: 4자 이상
+    - password: 8자 이상 + 영문 + 특수문자 (아래 field_validator 에서 검사)
+    - email   : 형식 검증
+    Pydantic 의 pattern 은 look-ahead 를 지원하지 않아(Rust 정규식),
+    '영문 AND 특수문자' 같은 복합 조건은 field_validator 로 구현한다.
+    """
+    username: str = Field(min_length=4, max_length=20)
+    password: str = Field(min_length=8, max_length=50)
+    name: str = Field(min_length=1, max_length=40)
+    phone: str = Field(min_length=1, max_length=20)
+    email: str = Field(min_length=1, max_length=100, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    address: str = Field(min_length=1, max_length=200)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if not re.search(r"[A-Za-z]", v):
+            raise ValueError("비밀번호에 영문이 포함되어야 합니다.")
+        if not re.search(SPECIAL_CHARS, v):
+            raise ValueError("비밀번호에 특수문자가 포함되어야 합니다.")
+        return v
 
 
 class OrderIn(BaseModel):
@@ -156,6 +203,11 @@ def page_login():
     return FileResponse(files.read_filepath("static", "login.html"))
 
 
+@app.get("/signup", include_in_schema=False)          # ← [회원가입] 페이지 라우트
+def page_signup():
+    return FileResponse(files.read_filepath("static", "signup.html"))
+
+
 @app.get("/order", include_in_schema=False)
 def page_order():
     return FileResponse(files.read_filepath("static", "order.html"))
@@ -184,8 +236,9 @@ def health() -> dict:
 
 @app.post("/api/reset")
 def reset_state() -> dict:
-    global products, order_seq            # ← [수정③] order_seq 도 초기화 대상
+    global products, order_seq, USERS     # ← [회원가입] USERS 도 초기화 대상
     products = deepcopy(SEED_PRODUCTS)
+    USERS = deepcopy(SEED_USERS)          # ← [회원가입] 가입 계정 초기화 (테스트 격리)
     cart.clear()
     _sessions.clear()                     # ← [수정③] 세션 초기화
     orders.clear()                        # ← [수정③] 주문 초기화
@@ -201,9 +254,30 @@ def current_user(session: str | None = Cookie(default=None)) -> str | None:
     return None
 
 
+@app.post("/api/signup", status_code=201)             # ← [회원가입] 가입 API
+def signup(payload: SignupIn) -> dict:
+    """회원가입. 아이디가 중복이면 409."""
+    if payload.username in USERS:
+        raise HTTPException(status_code=409, detail="이미 사용 중인 아이디입니다.")
+
+    USERS[payload.username] = {
+        "password": payload.password,
+        "name": payload.name,
+        "phone": payload.phone,
+        "email": payload.email,
+        "address": payload.address,
+    }
+    return {
+        "username": payload.username,
+        "name": payload.name,
+        "email": payload.email,
+    }
+
+
 @app.post("/api/login")
 def login(payload: LoginIn, response: Response) -> dict:
-    if USERS.get(payload.username) == payload.password:
+    user = USERS.get(payload.username)                       # ← [회원가입] dict 구조 대응
+    if user and user["password"] == payload.password:        # ← [회원가입] dict 구조 대응
         token = secrets.token_hex(16)
         _sessions[token] = payload.username
         # httponly 쿠키 → JS로 못 읽지만 브라우저가 자동으로 들고 다님
@@ -225,7 +299,14 @@ def me(session: str | None = Cookie(default=None)) -> dict:
     user = current_user(session)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return {"username": user}
+    profile = USERS.get(user, {})              # ← [회원가입] 프로필까지 반환
+    return {
+        "username": user,
+        "name": profile.get("name", ""),
+        "phone": profile.get("phone", ""),
+        "email": profile.get("email", ""),
+        "address": profile.get("address", ""),
+    }
 
 
 # --- 라우트: 주문 ----------------------------------------------------------
@@ -242,11 +323,10 @@ def create_order(payload: OrderIn, session: str | None = Cookie(default=None)) -
         "order_no": f"ORD-{order_seq:05d}",
         "user": current_user(session),  # 비회원이면 None
 
-        # ↓↓↓ 이 세 줄 추가 ↓↓↓
+        # 주문자 정보
         "orderer_name": payload.orderer_name,
         "orderer_phone": payload.orderer_phone,
         "orderer_email": payload.orderer_email,
-        # ↑↑↑ 추가 끝 ↑↑↑
 
         "items": summary["items"],
         "subtotal": summary["subtotal"],
@@ -389,6 +469,3 @@ def update_cart(product_id: int, payload: CartUpdateIn) -> dict:
 def remove_from_cart(product_id: int) -> dict:
     cart.pop(product_id, None)
     return cart_summary()
-
-
-
