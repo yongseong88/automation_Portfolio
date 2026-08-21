@@ -29,18 +29,16 @@
     <!-- 검색 결과 헤더 (검색 시에만 표시) -->
     <h2 class="section-title hidden" id="search-title" data-testid="search-title"></h2>
 
-    <!-- 특가 섹션 (검색 중엔 숨김) -->
-    <section id="deal-section">
-      <h2 class="section-title">🔥 이번 주 특가</h2>
-      <div class="grid" id="deal-grid" data-testid="deal-grid"></div>
-    </section>
-
-    <h2 class="section-title" id="all-title">전체 상품</h2>
     <div class="loading hidden" id="loading" data-testid="loading">
       <span class="spinner" aria-hidden="true"></span> 상품을 불러오는 중…
     </div>
     <p class="empty hidden" id="empty" data-testid="empty">검색 결과가 없습니다.</p>
-    <div class="grid" id="product-grid" data-testid="product-grid"></div>
+
+    <!-- 큐레이션 구좌 (검색 중엔 숨김) -->
+    <div id="sections" data-testid="sections"></div>
+
+    <!-- 검색 결과 목록 (검색 시에만 표시) -->
+    <div class="grid hidden" id="product-grid" data-testid="product-grid"></div>
   </main>
 
   <script src="/static/common.js"></script>
@@ -48,7 +46,115 @@
     const params = new URLSearchParams(location.search);
     const q = params.get("q") || "";
 
+    const VISIBLE_COUNT = 5;          // 구좌에서 한 번에 보여줄 상품 수
+    const sectionPages = {};          // 구좌별 현재 페이지 { deal: 0, popular: 1, ... }
+
+    /* ── 구좌(캐러셀) ──────────────────────────────────────────
+       상품을 5개씩 끊어서 보여주고, 좌우 버튼으로 다음 묶음을 노출한다.
+       첫/마지막 묶음에서는 해당 방향 버튼을 비활성화한다.
+    ------------------------------------------------------------ */
+    function sectionSlice(section) {
+      const page = sectionPages[section.key] || 0;
+      const start = page * VISIBLE_COUNT;
+      return section.products.slice(start, start + VISIBLE_COUNT);
+    }
+
+    function totalSectionPages(section) {
+      return Math.max(1, Math.ceil(section.products.length / VISIBLE_COUNT));
+    }
+
+    function renderSectionItems(section) {
+      const grid = document.querySelector(`#section-grid-${section.key}`);
+      if (grid) grid.innerHTML = sectionSlice(section).map(productCardHTML).join("");
+
+      const page = sectionPages[section.key] || 0;
+      const last = totalSectionPages(section) - 1;
+
+      const prev = document.querySelector(`#section-prev-${section.key}`);
+      const next = document.querySelector(`#section-next-${section.key}`);
+      if (prev) prev.disabled = page === 0;
+      if (next) next.disabled = page >= last;
+
+      const indicator = document.querySelector(`#section-page-${section.key}`);
+      if (indicator) indicator.textContent = `${page + 1} / ${last + 1}`;
+    }
+
+    function moveSection(section, delta) {
+      const last = totalSectionPages(section) - 1;
+      const current = sectionPages[section.key] || 0;
+      const next = current + delta;
+      if (next < 0 || next > last) return;
+      sectionPages[section.key] = next;
+      renderSectionItems(section);
+    }
+
+    function sectionHTML(section) {
+      const multiPage = section.products.length > VISIBLE_COUNT;
+      return `
+        <section class="carousel-section" data-testid="section-${section.key}">
+          <header class="carousel-header">
+            <div class="carousel-heading">
+              <h3 class="carousel-title" data-testid="section-title-${section.key}">
+                ${section.emoji} ${section.title}
+              </h3>
+              <p class="carousel-desc">${section.description}</p>
+            </div>
+            ${
+              multiPage
+                ? `<span class="carousel-page" id="section-page-${section.key}"
+                         data-testid="section-page-${section.key}"></span>`
+                : ""
+            }
+          </header>
+
+          <div class="carousel-wrapper">
+            ${
+              multiPage
+                ? `<button type="button" class="carousel-arrow prev"
+                           id="section-prev-${section.key}"
+                           data-testid="section-prev-${section.key}" aria-label="이전 상품">‹</button>`
+                : ""
+            }
+            <div class="carousel-list grid" id="section-grid-${section.key}"
+                 data-testid="section-grid-${section.key}"></div>
+            ${
+              multiPage
+                ? `<button type="button" class="carousel-arrow next"
+                           id="section-next-${section.key}"
+                           data-testid="section-next-${section.key}" aria-label="다음 상품">›</button>`
+                : ""
+            }
+          </div>
+        </section>`;
+    }
+
+    async function loadSections() {
+      const res = await fetch("/api/sections");
+      const data = await res.json();
+
+      document.querySelector("#sections").innerHTML =
+        data.items.map(sectionHTML).join("");
+
+      for (const section of data.items) {
+        sectionPages[section.key] = 0;
+        renderSectionItems(section);
+
+        const prev = document.querySelector(`#section-prev-${section.key}`);
+        const next = document.querySelector(`#section-next-${section.key}`);
+        if (prev) prev.addEventListener("click", () => moveSection(section, -1));
+        if (next) next.addEventListener("click", () => moveSection(section, 1));
+      }
+    }
+
     async function load() {
+      if (!q) {
+        // 검색어가 없으면 전체 목록 조회 없이 구좌만 그린다
+        document.querySelector("#product-grid").classList.add("hidden");
+        document.querySelector("#empty").classList.add("hidden");
+        await loadSections();
+        return;
+      }
+
       document.querySelector("#loading").classList.remove("hidden");
       document.querySelector("#empty").classList.add("hidden");
 
@@ -58,20 +164,21 @@
 
       const grid = document.querySelector("#product-grid");
       grid.innerHTML = data.items.map(productCardHTML).join("");
-      document.querySelector("#empty").classList.toggle("hidden", data.total !== 0);
 
       if (q) {
-        // 검색 모드: 특가 섹션 숨기고 검색 결과 제목 표시
-        document.querySelector("#deal-section").classList.add("hidden");
-        document.querySelector("#all-title").classList.add("hidden");
+        // 검색 모드: 구좌를 숨기고 검색 결과만 표시
+        document.querySelector("#sections").classList.add("hidden");
+        grid.classList.remove("hidden");
+        document.querySelector("#empty").classList.toggle("hidden", data.total !== 0);
         const title = document.querySelector("#search-title");
         title.textContent = `"${q}" 검색 결과 ${data.total}건`;
         title.classList.remove("hidden");
         document.querySelector("#site-search").value = q;
       } else {
-        // 특가 = 할인 상품
-        const deals = data.items.filter((p) => p.discount_pct > 0);
-        document.querySelector("#deal-grid").innerHTML = deals.map(productCardHTML).join("");
+        // 기본 모드: 구좌만 노출
+        grid.classList.add("hidden");
+        document.querySelector("#empty").classList.add("hidden");
+        loadSections();
       }
     }
 

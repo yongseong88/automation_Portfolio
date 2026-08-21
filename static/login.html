@@ -34,6 +34,11 @@
           <input type="password" id="password" data-testid="login-password"
                  autocomplete="current-password" />
         </div>
+        <label class="save-id">
+          <input type="checkbox" id="save-id" data-testid="save-id" />
+          <span>아이디 저장</span>
+        </label>
+
         <p class="login-signup">
           아직 아이디가 없으신가요?
           <span class="login-signup-sep">|</span>
@@ -63,6 +68,7 @@
         }),
       });
       if (res.ok) {
+        applySaveId(document.querySelector("#username").value.trim());  // 아이디 저장 반영
         window.location.href = next;  // 성공 → 원래 가려던 곳으로
       } else {
         const data = await res.json().catch(() => ({}));
@@ -76,6 +82,27 @@
       if (e.key === "Enter") doLogin();
     });
 
+    const SAVED_ID_KEY = "marketfresh_saved_id";
+
+    function restoreSavedId() {
+      // 저장해둔 아이디가 있으면 입력란에 채우고 체크박스를 켠다
+      const saved = localStorage.getItem(SAVED_ID_KEY);
+      if (!saved) return;
+      document.querySelector("#username").value = saved;
+      document.querySelector("#save-id").checked = true;
+      document.querySelector("#password").focus();   // 비밀번호로 커서 이동
+    }
+
+    function applySaveId(username) {
+      // 체크되어 있으면 아이디를 보관하고, 해제되어 있으면 지운다
+      if (document.querySelector("#save-id").checked) {
+        localStorage.setItem(SAVED_ID_KEY, username);
+      } else {
+        localStorage.removeItem(SAVED_ID_KEY);
+      }
+    }
+
+    restoreSavedId();
     initHeader();
   </script>
 </body>

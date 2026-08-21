@@ -44,13 +44,20 @@
 
   "signup": {
     "required_field": "필수 입력 항목입니다.",
-    "username_short": "아이디는 4자 이상이어야 합니다.",
+    "username_length": "아이디는 4~10자여야 합니다.",
+    "username_charset": "아이디는 영문/숫자/특수문자만 사용할 수 있습니다.",
     "username_duplicate": "이미 사용 중인 아이디입니다.",
-    "password_short": "비밀번호는 8자 이상이어야 합니다.",
-    "password_no_alpha": "비밀번호에 영문이 포함되어야 합니다.",
+    "password_length": "비밀번호는 8~16자여야 합니다.",
+    "password_charset": "비밀번호는 영문/숫자/특수문자만 사용할 수 있습니다.",
     "password_no_special": "비밀번호에 특수문자가 포함되어야 합니다.",
     "password_mismatch": "비밀번호가 일치하지 않습니다.",
+    "name_length": "이름은 40자 이하여야 합니다.",
+    "invalid_phone": "연락처는 010-0000-0000 형식으로 입력해주세요.",
+    "phone_duplicate": "이미 사용 중인 연락처입니다.",
     "invalid_email": "이메일 형식이 올바르지 않습니다.",
+    "email_length": "이메일은 100자 이하여야 합니다.",
+    "email_duplicate": "이미 사용 중인 이메일입니다.",
+    "address_length": "주소는 200자 이하여야 합니다.",
     "success": "회원가입이 완료되었습니다",
     "failed": "회원가입에 실패했습니다."
   }

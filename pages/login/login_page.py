@@ -46,6 +46,22 @@ class LoginPage(BasePage):
             )
             raise
 
+    def go_to_signup(self) -> None:
+        """로그인 페이지 하단의 '회원가입' 링크를 클릭해 회원가입 페이지로 이동한다."""
+        try:
+            self.wait_visible(self.ll.signup_link, 5000)
+            self.element_by_click(self.ll.signup_link)
+
+            logger.info("회원가입 페이지 진입")
+
+        except Exception:
+            # 회원가입 링크는 로그인 페이지에서만 노출된다 → 다른 페이지면 못 찾는다
+            logger.exception(
+                "회원가입 링크 클릭 실패 (로그인 페이지가 아니거나 링크 미노출): locator=%s, url=%s",
+                self.ll.signup_link, self.page.url
+            )
+            raise
+
     def login_form(self):
         """로그인 폼 카드 요소."""
         try:

@@ -28,14 +28,14 @@
         <div class="field">
           <label for="username">아이디</label>
           <input type="text" id="username" data-testid="signup-username"
-                 placeholder="4자 이상" autocomplete="username" />
+                 placeholder="영문/숫자/특수문자 4~10자" autocomplete="username" />
           <p class="error" id="username-error" data-testid="username-error" role="alert"></p>
         </div>
 
         <div class="field">
           <label for="password">비밀번호</label>
           <input type="password" id="password" data-testid="signup-password"
-                 placeholder="8자 이상, 영문+특수문자 포함" autocomplete="new-password" />
+                 placeholder="8~16자, 특수문자 1개 이상 포함" autocomplete="new-password" />
           <p class="error" id="password-error" data-testid="password-error" role="alert"></p>
         </div>
 
@@ -88,8 +88,52 @@
 
   <script src="/static/common.js"></script>
   <script>
-    const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-    const SPECIAL_RE = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/;
+    /* 입력 규칙은 서버(app.py) 와 같은 기준으로 맞춘다.
+       - 아이디  : 영문/숫자/특수문자 4~10자
+       - 비밀번호: 영문/숫자/특수문자 8~16자 + 특수문자 1개 이상
+       - 이름    : 40자 이하 / 주소: 200자 이하
+       - 연락처  : 3자리-4자리-4자리
+       - 이메일  : 아이디@도메인.최상위도메인(2자 이상), 100자 이하
+       화면에서 못 거른 값은 서버가 422 로 막지만, 그러면 어느 항목이 문제인지
+       사용자가 알 수 없으므로 여기서 필드별로 안내한다. */
+    const SPECIAL_CLASS = "!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?~`";
+    const USERNAME_RE = new RegExp(`^[A-Za-z0-9${SPECIAL_CLASS}]{4,10}$`);
+    const PASSWORD_RE = new RegExp(`^[A-Za-z0-9${SPECIAL_CLASS}]{8,16}$`);
+    const SPECIAL_RE = new RegExp(`[${SPECIAL_CLASS}]`);
+    const EMAIL_RE = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/;
+    const PHONE_RE = /^\d{3}-\d{4}-\d{4}$/;
+
+    /* 아이디/비밀번호는 허용 문자만 '입력 자체'가 되도록 필드에서 걸러낸다.
+       한글·공백처럼 규칙에 없는 문자는 타이핑해도, 붙여넣어도 필드에 남지 않는다.
+       (한글 IME 는 조합이 끝난 뒤 걸러야 조합 중 글자가 깨지지 않는다) */
+    const DISALLOWED_RE = new RegExp(`[^A-Za-z0-9${SPECIAL_CLASS}]`, "g");
+    const FILTERED_INPUTS = ["#username", "#password", "#password-confirm"];
+
+    function filterInput(el) {
+      const filtered = el.value.replace(DISALLOWED_RE, "");
+      if (filtered === el.value) return;
+
+      // 값을 다시 넣으면 커서가 끝으로 튀므로, 지워진 글자 수만큼 되돌려 준다
+      const caret = el.selectionStart - (el.value.length - filtered.length);
+      el.value = filtered;
+      el.setSelectionRange(caret, caret);
+    }
+
+    for (const selector of FILTERED_INPUTS) {
+      const el = document.querySelector(selector);
+      el.addEventListener("input", (e) => {
+        if (e.isComposing) return;     // 한글 조합 중에는 건드리지 않는다
+        filterInput(el);
+      });
+      el.addEventListener("compositionend", () => filterInput(el));
+    }
+
+    // 중복(409) 응답의 field 값 → 문구를 표시할 에러 영역
+    const DUP_ERROR = {
+      username: "#username-error",
+      email: "#email-error",
+      phone: "#phone-error",
+    };
 
     function setError(id, message) {
       document.querySelector(id).textContent = message;
@@ -115,20 +159,23 @@
       }
       if (!ok) return false;         // 빈 값이 있으면 형식 검사 생략
 
-      // 아이디 4자 이상
+      // 아이디: 4~10자 + 허용 문자
       const username = document.querySelector("#username").value.trim();
-      if (username.length < 4) {
-        setError("#username-error", "아이디는 4자 이상이어야 합니다.");
+      if (username.length < 4 || username.length > 10) {
+        setError("#username-error", "아이디는 4~10자여야 합니다.");
+        ok = false;
+      } else if (!USERNAME_RE.test(username)) {
+        setError("#username-error", "아이디는 영문/숫자/특수문자만 사용할 수 있습니다.");
         ok = false;
       }
 
-      // 비밀번호: 8자 이상 + 영문 + 특수문자
+      // 비밀번호: 8~16자 + 허용 문자 + 특수문자 1개 이상
       const password = document.querySelector("#password").value;
-      if (password.length < 8) {
-        setError("#password-error", "비밀번호는 8자 이상이어야 합니다.");
+      if (password.length < 8 || password.length > 16) {
+        setError("#password-error", "비밀번호는 8~16자여야 합니다.");
         ok = false;
-      } else if (!/[A-Za-z]/.test(password)) {
-        setError("#password-error", "비밀번호에 영문이 포함되어야 합니다.");
+      } else if (!PASSWORD_RE.test(password)) {
+        setError("#password-error", "비밀번호는 영문/숫자/특수문자만 사용할 수 있습니다.");
         ok = false;
       } else if (!SPECIAL_RE.test(password)) {
         setError("#password-error", "비밀번호에 특수문자가 포함되어야 합니다.");
@@ -142,10 +189,34 @@
         ok = false;
       }
 
-      // 이메일 형식
+      // 이름 길이
+      const name = document.querySelector("#name").value.trim();
+      if (name.length > 40) {
+        setError("#name-error", "이름은 40자 이하여야 합니다.");
+        ok = false;
+      }
+
+      // 연락처 형식
+      const phone = document.querySelector("#phone").value.trim();
+      if (!PHONE_RE.test(phone)) {
+        setError("#phone-error", "연락처는 010-0000-0000 형식으로 입력해주세요.");
+        ok = false;
+      }
+
+      // 이메일 형식/길이
       const email = document.querySelector("#email").value.trim();
       if (!EMAIL_RE.test(email)) {
         setError("#email-error", "이메일 형식이 올바르지 않습니다.");
+        ok = false;
+      } else if (email.length > 100) {
+        setError("#email-error", "이메일은 100자 이하여야 합니다.");
+        ok = false;
+      }
+
+      // 주소 길이
+      const address = document.querySelector("#address").value.trim();
+      if (address.length > 200) {
+        setError("#address-error", "주소는 200자 이하여야 합니다.");
         ok = false;
       }
 
@@ -173,9 +244,11 @@
         toast("회원가입이 완료되었습니다");
         setTimeout(() => { window.location.href = "/login"; }, 800);
       } else if (res.status === 409) {
+        // detail = {field, message} → 중복된 항목의 에러 영역에 문구를 표시한다
         const body = await res.json();
-        document.querySelector("#username-error").textContent =
-          body.detail || "이미 사용 중인 아이디입니다.";
+        const detail = body.detail || {};
+        const target = DUP_ERROR[detail.field] || "#signup-error";
+        setError(target, detail.message || "이미 사용 중인 정보입니다.");
       } else {
         document.querySelector("#signup-error").textContent = "회원가입에 실패했습니다.";
       }

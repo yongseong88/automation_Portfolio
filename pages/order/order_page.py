@@ -139,9 +139,12 @@ class OrderPage(BasePage):
 
 
     # --- 진입 ---
-    def open_order(self):
-        """주문서로 직접 진입 후 로딩 대기 (카트에 상품이 있어야 폼이 노출됨)."""
-        self.open()  # base_url + PATH 로 이동
+    def order_form(self):
+        """주문서 로딩이 끝날 때까지 대기 (진입 확인).
+
+        주문서 진입은 '장바구니 → 주문하기' 클릭으로 한다 (CartPage.go_to_cart /
+        go_to_order). URL 직접 입력은 실제 사용자 동선이 아니라 쓰지 않는다.
+        """
         self.wait_loaded(self.ol.loading)
 
 

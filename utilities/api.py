@@ -25,6 +25,32 @@ class AuthApi:
         return self.request.post("/api/logout")
 
 
+class SignupApi:
+    # 서버(SignupIn)가 받는 가입 입력 항목. password_confirm 은 화면 전용이라 제외한다.
+    SIGNUP_FIELDS = ("username", "password", "name", "phone", "email", "address")
+
+    def __init__(self, request: APIRequestContext):
+        self.request = request
+
+    def signup(self, account: dict) -> APIResponse:
+        """회원가입 API 호출 (POST /api/signup).
+
+        응답: 성공 201 / 입력 형식 위반 422 / 아이디·이메일·연락처 중복 409.
+        409 의 detail 에는 {"field", "message"} 로 어느 항목이 중복인지 담긴다.
+        """
+        payload = {key: account[key] for key in self.SIGNUP_FIELDS if key in account}
+
+        return self.request.post("/api/signup", data=payload)
+
+    def signup_with(self, account: dict) -> APIResponse:
+        """
+            가입 정보 dict 로 회원가입 API 를 호출한다.
+            password_confirm 은 화면 전용 필드라 요청에서 제외한다.
+        """
+        payload = {k: v for k, v in account.items() if k != "password_confirm"}
+        return self.request.post("/api/signup", data=payload)
+
+
 
 class ProductApi:
     def __init__(self, request: APIRequestContext):

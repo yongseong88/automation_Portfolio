@@ -1,0 +1,63 @@
+{
+  "valid_user": {
+    "username": "qauser01",
+    "password": "Passw0rd!",
+    "password_confirm": "Passw0rd!",
+    "name": "박테스터",
+    "phone": "010-1234-5678",
+    "email": "qauser01@test.com",
+    "address": "서울시 강남구 테헤란로 1"
+  },
+  "existing_user": {
+    "username": "demo",
+    "phone": "010-1111-2222",
+    "email": "demo@marketfresh.com"
+  },
+  "allowed_special_chars": [
+    "!", "@", "#", "$", "%", "^", "&", "*", "(", ")",
+    "_", "+", "-", "=", "[", "]", "{", "}", ";", "'",
+    ":", "\"", "\\", "|", ",", ".", "<", ">", "/", "?", "~", "`"
+  ],
+  "filter_cases": {
+    "username": {
+      "ko_front": "테스터01",
+      "ko_back": "qa01테스터",
+      "ko_middle": "qa테스터01",
+      "ko_consonant": "ㅋㅋ01",
+      "ko_vowel": "ㅏㅓ01",
+      "space": "qa user",
+      "tab": "qa\t01"
+    },
+    "password": {
+      "ko_front": "비밀번호1234!",
+      "ko_back": "Pass123!비밀",
+      "ko_consonant": "ㅋㅋPass123!",
+      "space": "Pass 123!"
+    },
+    "password_confirm": {
+      "ko_only": "비밀번호1234!",
+      "space": "Pass 123!"
+    }
+  },
+  "invalid_format": {
+    "username": {
+      "too_short": "abc",
+      "too_long": "abcdefghijk"
+    },
+    "password": {
+      "too_short": "abc123!",
+      "too_long": "abcdefghij123456!",
+      "no_special": "abcd12345"
+    },
+    "email": {
+      "no_at_mark": "nomarkmail.com",
+      "no_dot": "no@domain",
+      "no_local": "@test.com"
+    },
+    "phone": {
+      "no_hyphen": "01012345678",
+      "wrong_digits": "010-123-5678",
+      "with_letter": "010-abcd-5678"
+    }
+  }
+}

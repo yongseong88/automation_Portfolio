@@ -92,6 +92,25 @@ class BasePage:
             logger.exception("input_text 실패: %s", locator)
             raise
 
+    def paste_text(self, locator: str, text: str) -> None:
+        """클립보드에 값을 넣고 붙여넣기(Ctrl/Cmd+V)로 입력한다.
+
+        fill() 은 값을 직접 주입하지만 붙여넣기는 실제 paste 이벤트를 발생시킨다.
+        입력 방식에 따라 화면 검증이 달라지지 않는지 확인할 때 쓴다.
+        """
+        try:
+            self.page.context.grant_permissions(["clipboard-read", "clipboard-write"])
+
+            element = self.get_element_by_locator(locator)
+            element.click()
+            element.fill("")  # 기존 값을 비우고 붙여넣어야 값이 덧붙지 않는다
+            self.page.evaluate("value => navigator.clipboard.writeText(value)", text)
+            element.press("ControlOrMeta+v")
+
+        except Exception:
+            logger.exception("paste_text 실패: %s", locator)
+            raise
+
     def press_key(self, locator: str, key: str) -> None:
         """키 입력. 예: 'Enter', 'Space', 'Escape', 'Tab'."""
         try:

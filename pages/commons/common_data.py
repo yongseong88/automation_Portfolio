@@ -15,7 +15,7 @@ class Commondata():
     def get_product_info(self):
         """products.json 을 읽어 무작위 순서로 반환. 읽기 실패/형식 불일치면 None."""
         try:
-            product_json_path = self.File_read_util.read_filepath("config/", "products.json")
+            product_json_path = self.File_read_util.read_filepath("config", "products.json")
             product_data = self.File_read_util.read_file(product_json_path)
 
             if isinstance(product_data, list):

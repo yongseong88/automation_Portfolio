@@ -13,3 +13,5 @@ class LoginLocators:
     # 로그아웃 버튼 / 비로그인 상태의 '로그인' 링크
     logout = '[data-testid="logout"]'
     login_link = '[data-testid="login-link"]'
+    # 로그인 페이지 하단의 '회원가입' 링크
+    signup_link = '[data-testid="signup-link"]'

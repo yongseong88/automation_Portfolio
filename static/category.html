@@ -12,6 +12,7 @@
       <a class="logo" href="/" data-testid="logo">마켓프레시</a>
       <input class="search" id="site-search" data-testid="search"
              placeholder="검색어를 입력해주세요" aria-label="상품 검색" />
+      <span class="auth" id="auth-area" data-testid="auth-area"></span>
       <a class="cart-link" href="/cart" data-testid="cart-link" aria-label="장바구니">
         🛒<span class="cart-count hidden" id="cart-count" data-testid="cart-count">0</span>
       </a>
@@ -37,12 +38,113 @@
     </div>
     <p class="empty hidden" id="empty" data-testid="empty">해당 카테고리에 상품이 없습니다.</p>
     <div class="grid" id="product-grid" data-testid="product-grid" style="margin-top:1rem"></div>
+
+    <div class="pagination-bar hidden" id="pagination-bar" data-testid="pagination-bar"></div>
   </main>
 
   <script src="/static/common.js"></script>
   <script>
-    // URL: /category/{slug}
+    // URL: /category/{slug}?page=2&size=20
     const slug = location.pathname.split("/").filter(Boolean)[1];
+
+    // 페이지당 상품 수 선택지 (API 상한이 50 이라 그 이하로 둔다)
+    const PAGE_SIZE_OPTIONS = [20, 40, 50];
+    const DEFAULT_PAGE_SIZE = 20;
+
+    function getPageState() {
+      // URL 쿼리에서 현재 페이지/페이지크기를 읽는다 (잘못된 값은 기본값으로 보정)
+      const params = new URLSearchParams(location.search);
+      const page = Math.max(1, parseInt(params.get("page"), 10) || 1);
+      const sizeRaw = parseInt(params.get("size"), 10);
+      const size = PAGE_SIZE_OPTIONS.includes(sizeRaw) ? sizeRaw : DEFAULT_PAGE_SIZE;
+      return { page, size };
+    }
+
+    function setPageState(page, size) {
+      // 새로고침 없이 URL 만 갱신 → 뒤로가기/북마크로도 같은 화면 재현 가능
+      const params = new URLSearchParams(location.search);
+      params.set("page", page);
+      params.set("size", size);
+      history.pushState({ page, size }, "", `${location.pathname}?${params.toString()}`);
+    }
+
+    function pageNumbers(current, totalPages) {
+      // 1 … 4 [5] 6 … 20 형태로 노출할 항목을 만든다 (현재 기준 좌우 2개 + 양끝)
+      const around = 2;
+      const pages = new Set([1, totalPages]);
+      for (let p = current - around; p <= current + around; p++) {
+        if (p >= 1 && p <= totalPages) pages.add(p);
+      }
+      const sorted = [...pages].sort((a, b) => a - b);
+
+      const result = [];
+      let prev = 0;
+      for (const p of sorted) {
+        if (prev && p - prev > 1) result.push("...");
+        result.push(p);
+        prev = p;
+      }
+      return result;
+    }
+
+    function renderPagination({ page, size, total, totalPages }) {
+      const box = document.querySelector("#pagination-bar");
+      box.classList.toggle("hidden", total === 0);
+      if (total === 0) return;
+
+      const showPages = totalPages > 1;   // 1페이지뿐이면 번호는 감춘다
+      const numbersHTML = showPages
+        ? pageNumbers(page, totalPages)
+            .map((p) =>
+              p === "..."
+                ? `<span class="page-ellipsis">…</span>`
+                : `<button type="button" class="page-btn${p === page ? " current" : ""}"
+                     data-page="${p}" data-testid="page-${p}"
+                     ${p === page ? 'aria-current="page"' : ""}>${p}</button>`
+            )
+            .join("")
+        : "";
+
+      box.innerHTML = `
+        <div class="page-size">
+          <label for="page-size-select">페이지당</label>
+          <select id="page-size-select" data-testid="page-size">
+            ${PAGE_SIZE_OPTIONS.map(
+              (n) => `<option value="${n}"${n === size ? " selected" : ""}>${n}개</option>`
+            ).join("")}
+          </select>
+          <span class="page-total" data-testid="page-total">총 ${total}개</span>
+        </div>
+        ${
+          showPages
+            ? `<div class="page-nav" data-testid="pagination">
+                 <button type="button" class="page-btn nav" data-page="${page - 1}"
+                         data-testid="page-prev" ${page === 1 ? "disabled" : ""}>이전</button>
+                 ${numbersHTML}
+                 <button type="button" class="page-btn nav" data-page="${page + 1}"
+                         data-testid="page-next" ${page === totalPages ? "disabled" : ""}>다음</button>
+               </div>`
+            : ""
+        }
+      `;
+
+      box.querySelectorAll(".page-btn[data-page]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const next = parseInt(btn.dataset.page, 10);
+          if (!next || next < 1 || next > totalPages || next === page) return;
+          setPageState(next, size);
+          load();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+
+      const sizeSelect = box.querySelector("#page-size-select");
+      sizeSelect.addEventListener("change", (e) => {
+        // 페이지 크기가 바뀌면 1페이지부터 다시 본다
+        setPageState(1, parseInt(e.target.value, 10));
+        load();
+      });
+    }
 
     async function setTitle() {
       const res = await fetch("/api/categories");
@@ -56,10 +158,12 @@
     async function load() {
       document.querySelector("#loading").classList.remove("hidden");
       document.querySelector("#empty").classList.add("hidden");
+      document.querySelector("#pagination-bar").classList.add("hidden");
 
+      const { page, size } = getPageState();
       const [sort, order] = document.querySelector("#sort").value.split(":");
       const res = await fetch(
-        `/api/products?category=${slug}&sort=${sort}&order=${order}&page_size=50`
+        `/api/products?category=${slug}&sort=${sort}&order=${order}&page=${page}&page_size=${size}`
       );
       const data = await res.json();
       document.querySelector("#loading").classList.add("hidden");
@@ -67,9 +171,24 @@
       document.querySelector("#product-grid").innerHTML =
         data.items.map(productCardHTML).join("");
       document.querySelector("#empty").classList.toggle("hidden", data.total !== 0);
+
+      renderPagination({
+        page: data.page,
+        size: data.page_size,
+        total: data.total,
+        totalPages: data.total_pages,
+      });
     }
 
-    document.querySelector("#sort").addEventListener("change", load);
+    document.querySelector("#sort").addEventListener("change", () => {
+      // 정렬이 바뀌면 1페이지부터 다시 본다
+      const { size } = getPageState();
+      setPageState(1, size);
+      load();
+    });
+
+    // 뒤로/앞으로 가기 시에도 해당 페이지를 다시 그린다
+    window.addEventListener("popstate", load);
 
     initHeader();
     setTitle();

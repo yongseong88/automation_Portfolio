@@ -76,6 +76,7 @@ function initHeader() {
   loadCategoryNav();
   refreshCartCount();
   renderAuth();
+  renderFooter();
   wireSearch();
 }
 
@@ -99,4 +100,86 @@ function productCardHTML(p) {
       <span class="punit">${p.unit}</span>
       <div class="price-row">${priceBlock}</div>
     </a>`;
+}
+
+
+/* ── 푸터 ───────────────────────────────────────────────────────
+   사업자 정보 / 고객 연락처 / 정책 링크 / 저작권 / 소셜 링크.
+   모든 페이지에서 initHeader() 를 호출하므로 여기서 한 번만 그린다.
+   표기 내용은 데모용 더미 데이터다.
+------------------------------------------------------------------ */
+const FOOTER_INFO = {
+  company: [
+    ["상호명", "주식회사 마켓프레시"],
+    ["대표자명", "김신선"],
+    ["사업자등록번호", "123-45-67890"],
+    ["통신판매업신고번호", "제2026-서울강남-01234호"],
+    ["주소", "서울특별시 강남구 테헤란로 123, 마켓프레시빌딩 8층"],
+  ],
+  contact: [
+    ["대표 전화", "1000-1234"],
+    ["고객문의", "help@marketfresh.test"],
+    ["팩스", "02-1234-5679"],
+  ],
+  policies: [
+    ["개인정보처리방침", "/policy/privacy", "privacy"],
+    ["이용안내", "/policy/guide", "guide"],
+    ["서비스 이용약관", "/policy/terms", "terms"],
+  ],
+  socials: [
+    ["공식 블로그", "https://blog.naver.com", "📝", "blog"],
+    ["유튜브", "https://youtube.com", "▶️", "youtube"],
+    ["인스타그램", "https://instagram.com", "📷", "instagram"],
+    ["페이스북", "https://facebook.com", "👍", "facebook"],
+  ],
+};
+
+function renderFooter() {
+  if (document.querySelector("#site-footer")) return;   // 중복 렌더 방지
+
+  const year = new Date().getFullYear();
+  const dl = (rows) =>
+    rows.map(([k, v]) => `<div class="foot-row"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+
+  const footer = document.createElement("footer");
+  footer.className = "site-footer";
+  footer.id = "site-footer";
+  footer.dataset.testid = "footer";
+  footer.innerHTML = `
+    <div class="footer-inner">
+      <nav class="footer-policies" data-testid="footer-policies" aria-label="정책">
+        ${FOOTER_INFO.policies
+          .map(([label, href, key]) =>
+            `<a href="${href}" target="_blank" rel="noreferrer"
+                data-testid="footer-${key}">${label}</a>`)
+          .join('<span class="foot-sep">|</span>')}
+      </nav>
+
+      <div class="footer-cols">
+        <dl class="footer-col" data-testid="footer-company">
+          <p class="foot-heading">사업자 정보</p>
+          ${dl(FOOTER_INFO.company)}
+        </dl>
+        <dl class="footer-col" data-testid="footer-contact">
+          <p class="foot-heading">고객센터</p>
+          ${dl(FOOTER_INFO.contact)}
+          <p class="foot-note">운영시간 평일 09:00 ~ 18:00 (주말·공휴일 휴무)</p>
+        </dl>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy" data-testid="footer-copyright">
+          Copyright © ${year} MarketFresh Corp. All rights reserved.
+        </p>
+        <ul class="footer-social" data-testid="footer-social">
+          ${FOOTER_INFO.socials
+            .map(([label, href, icon, key]) =>
+              `<li><a href="${href}" target="_blank" rel="noreferrer"
+                     title="${label}" aria-label="${label}"
+                     data-testid="social-${key}">${icon}</a></li>`)
+            .join("")}
+        </ul>
+      </div>
+    </div>`;
+  document.body.appendChild(footer);
 }

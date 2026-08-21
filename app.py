@@ -43,8 +43,11 @@ CATEGORIES = files.read_file(files.read_filepath("config", "categories.json"))
 SEED_PRODUCTS = files.read_file(files.read_filepath("config", "products.json"))
 products: list[dict] = deepcopy(SEED_PRODUCTS)
 
-# 장바구니: {product_id: qty} (데모용 단일 전역 장바구니)
-cart: dict[int, int] = {}
+# 장바구니: 소유자별로 분리해서 보관한다.
+#   {"__guest__": {product_id: qty}, "demo": {product_id: qty}, ...}
+# 로그인 사용자는 자기 장바구니가 유지되고, 비회원 장바구니는 로그인 시 병합된다.
+GUEST_CART_KEY = "__guest__"
+carts: dict[str, dict[int, int]] = {}
 
 # --- 로그인 계정 / 세션 ----------------------------------------------------
 # 데모 계정 시드 (username -> 프로필). 회원가입 시 USERS 에 추가된다.
@@ -91,32 +94,38 @@ class LoginIn(BaseModel):
     password: str = Field(min_length=1)
 
 
-# 비밀번호에 반드시 포함되어야 하는 특수문자 집합
-SPECIAL_CHARS = r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~`]"
+# 허용 특수문자 집합 (아이디/비밀번호 공통)
+SPECIAL_CHARS = r"!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>/?~`"
+
+# 회원가입 입력 규칙
+#  - 아이디  : 영문/숫자/특수문자 4~10자 (공백·한글 불가)
+#  - 비밀번호: 영문/숫자/특수문자 8~16자, 특수문자 1개 이상 필수 (공백·한글 불가)
+#  - 이메일  : 아이디@도메인.최상위도메인 (공백·한글 불가, @ 및 마침표 필수)
+#  - 연락처  : 3자리-4자리-4자리 (숫자와 하이픈만)
+USERNAME_PATTERN = rf"^[A-Za-z0-9{SPECIAL_CHARS}]{{4,10}}$"
+PASSWORD_PATTERN = rf"^[A-Za-z0-9{SPECIAL_CHARS}]{{8,16}}$"
+EMAIL_PATTERN = r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"
+PHONE_PATTERN = r"^\d{3}-\d{4}-\d{4}$"
 
 
 class SignupIn(BaseModel):
     """회원가입 입력.
 
-    - username: 4자 이상
-    - password: 8자 이상 + 영문 + 특수문자 (아래 field_validator 에서 검사)
-    - email   : 형식 검증
-    Pydantic 의 pattern 은 look-ahead 를 지원하지 않아(Rust 정규식),
-    '영문 AND 특수문자' 같은 복합 조건은 field_validator 로 구현한다.
+    문자 종류/길이는 pattern 으로, '특수문자 1개 이상 포함' 같은 복합 조건은
+    field_validator 로 검사한다.
+    (Pydantic 의 pattern 은 Rust 정규식이라 look-ahead 를 지원하지 않는다)
     """
-    username: str = Field(min_length=4, max_length=20)
-    password: str = Field(min_length=8, max_length=50)
+    username: str = Field(pattern=USERNAME_PATTERN)
+    password: str = Field(pattern=PASSWORD_PATTERN)
     name: str = Field(min_length=1, max_length=40)
-    phone: str = Field(min_length=1, max_length=20)
-    email: str = Field(min_length=1, max_length=100, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    phone: str = Field(pattern=PHONE_PATTERN)
+    email: str = Field(pattern=EMAIL_PATTERN, max_length=100)
     address: str = Field(min_length=1, max_length=200)
 
     @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
-        if not re.search(r"[A-Za-z]", v):
-            raise ValueError("비밀번호에 영문이 포함되어야 합니다.")
-        if not re.search(SPECIAL_CHARS, v):
+        if not re.search(f"[{re.escape(SPECIAL_CHARS)}]", v):
             raise ValueError("비밀번호에 특수문자가 포함되어야 합니다.")
         return v
 
@@ -154,7 +163,19 @@ def serialize(p: dict) -> dict:
     return out
 
 
-def cart_summary() -> dict:
+def cart_owner(session: str | None) -> str:
+    """현재 요청의 장바구니 소유자 키 (로그인 사용자명 또는 비회원 키)."""
+    user = current_user(session)
+    return user if user else GUEST_CART_KEY
+
+
+def get_cart(session: str | None) -> dict[int, int]:
+    """소유자의 장바구니를 돌려준다 (없으면 새로 만들어 반환)."""
+    return carts.setdefault(cart_owner(session), {})
+
+
+def cart_summary(session: str | None = None) -> dict:
+    cart = get_cart(session)
     items = []
     subtotal = 0
     for pid, qty in cart.items():
@@ -191,6 +212,12 @@ def page_category(slug: str):
 @app.get("/product/{product_id}", include_in_schema=False)
 def page_product(product_id: int):
     return FileResponse(files.read_filepath("static", "product.html"))
+
+
+@app.get("/policy/{key}", include_in_schema=False)
+def page_policy(key: str):
+    """약관/정책 문서 (privacy | guide | terms). 문서 내용은 정적 페이지에 담겨 있다."""
+    return FileResponse(files.read_filepath("static", "policy.html"))
 
 
 @app.get("/cart", include_in_schema=False)
@@ -239,7 +266,7 @@ def reset_state() -> dict:
     global products, order_seq, USERS     # ← [회원가입] USERS 도 초기화 대상
     products = deepcopy(SEED_PRODUCTS)
     USERS = deepcopy(SEED_USERS)          # ← [회원가입] 가입 계정 초기화 (테스트 격리)
-    cart.clear()
+    carts.clear()                         # ← 모든 소유자의 장바구니 초기화
     _sessions.clear()                     # ← [수정③] 세션 초기화
     orders.clear()                        # ← [수정③] 주문 초기화
     order_seq = 0                         # ← [수정③] 주문 시퀀스 초기화
@@ -254,11 +281,37 @@ def current_user(session: str | None = Cookie(default=None)) -> str | None:
     return None
 
 
-@app.post("/api/signup", status_code=201)             # ← [회원가입] 가입 API
-def signup(payload: SignupIn) -> dict:
-    """회원가입. 아이디가 중복이면 409."""
+def only_digits(value: str) -> str:
+    """비교용으로 숫자만 남긴다 (010-1234-5678 과 01012345678 을 같게 취급)."""
+    return re.sub(r"\D", "", value or "")
+
+
+def find_duplicate(payload: SignupIn) -> dict | None:
+    """이미 사용 중인 항목이 있으면 {"field","message"} 를, 없으면 None 을 반환."""
     if payload.username in USERS:
-        raise HTTPException(status_code=409, detail="이미 사용 중인 아이디입니다.")
+        return {"field": "username", "message": "이미 사용 중인 아이디입니다."}
+
+    phone_digits = only_digits(payload.phone)
+    email_lower = payload.email.lower()
+
+    for user in USERS.values():
+        if user.get("email", "").lower() == email_lower:
+            return {"field": "email", "message": "이미 사용 중인 이메일입니다."}
+        if only_digits(user.get("phone", "")) == phone_digits:
+            return {"field": "phone", "message": "이미 사용 중인 연락처입니다."}
+    return None
+
+
+@app.post("/api/signup", status_code=201)
+def signup(payload: SignupIn) -> dict:
+    """회원가입.
+
+    입력 형식 위반은 422(SignupIn 이 처리), 이미 사용 중인 값은 409 로 응답한다.
+    409 응답의 detail 에는 어느 항목이 중복인지 담아 화면이 해당 필드에 표시할 수 있게 한다.
+    """
+    duplicated = find_duplicate(payload)
+    if duplicated:
+        raise HTTPException(status_code=409, detail=duplicated)
 
     USERS[payload.username] = {
         "password": payload.password,
@@ -274,6 +327,24 @@ def signup(payload: SignupIn) -> dict:
     }
 
 
+def merge_guest_cart(username: str) -> int:
+    """비회원 장바구니를 로그인 사용자 장바구니에 합치고, 비회원 것은 비운다.
+
+    같은 상품이면 수량을 더한다(최대 99). 병합된 상품 종류 수를 돌려준다.
+    """
+    guest_cart = carts.get(GUEST_CART_KEY, {})
+    if not guest_cart:
+        return 0
+
+    user_cart = carts.setdefault(username, {})
+    for pid, qty in guest_cart.items():
+        user_cart[pid] = min(user_cart.get(pid, 0) + qty, 99)
+
+    merged = len(guest_cart)
+    guest_cart.clear()
+    return merged
+
+
 @app.post("/api/login")
 def login(payload: LoginIn, response: Response) -> dict:
     user = USERS.get(payload.username)                       # ← [회원가입] dict 구조 대응
@@ -282,7 +353,11 @@ def login(payload: LoginIn, response: Response) -> dict:
         _sessions[token] = payload.username
         # httponly 쿠키 → JS로 못 읽지만 브라우저가 자동으로 들고 다님
         response.set_cookie("session", token, httponly=True, samesite="lax")
-        return {"user": {"username": payload.username}}
+
+        # 비회원 상태에서 담아둔 상품을 로그인 계정 장바구니로 옮긴다
+        merged = merge_guest_cart(payload.username)
+
+        return {"user": {"username": payload.username}, "merged_cart_items": merged}
     raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
 
 
@@ -312,7 +387,7 @@ def me(session: str | None = Cookie(default=None)) -> dict:
 # --- 라우트: 주문 ----------------------------------------------------------
 @app.post("/api/orders", status_code=201)
 def create_order(payload: OrderIn, session: str | None = Cookie(default=None)) -> dict:
-    summary = cart_summary()
+    summary = cart_summary(session)
     if not summary["items"]:
         raise HTTPException(status_code=409, detail="장바구니가 비어 있습니다.")
 
@@ -341,7 +416,7 @@ def create_order(payload: OrderIn, session: str | None = Cookie(default=None)) -
         "status": "결제완료",
     }
     orders.append(order)
-    cart.clear()  # 주문 후 장바구니 비움
+    get_cart(session).clear()  # 주문 후 해당 소유자의 장바구니만 비움
     return order
 
 
@@ -372,11 +447,73 @@ def list_categories() -> dict:
     return {"items": CATEGORIES}
 
 
+SECTION_SIZE = 20        # 구좌당 내려줄 상품 수 (화면은 5개씩 넘겨서 본다)
+
+
+def section_products(key: str) -> list[dict]:
+    """구좌 키에 해당하는 상품 목록을 정책에 맞게 골라 돌려준다."""
+    available = [p for p in products if p["stock"] > 0]
+
+    if key == "deal":
+        # 특가: 정가 대비 할인이 있는 상품을 할인율 높은 순으로
+        picked = [p for p in available if (p.get("original_price") or 0) > p["price"]]
+        picked.sort(
+            key=lambda p: (p["original_price"] - p["price"]) / p["original_price"],
+            reverse=True,
+        )
+    elif key == "popular":
+        # 인기: 판매량 많은 순
+        picked = sorted(available, key=lambda p: p.get("sales_count", 0), reverse=True)
+    elif key == "new":
+        # 신상: badge 가 '신상' 인 상품 (최근 등록 = id 큰 순)
+        picked = [p for p in available if p.get("badge") == "신상"]
+        picked.sort(key=lambda p: p["id"], reverse=True)
+    elif key == "limited":
+        # 한정: badge 가 '한정' 인 상품 (재고 적은 순 → 희소성)
+        picked = [p for p in available if p.get("badge") == "한정"]
+        picked.sort(key=lambda p: p["stock"])
+    elif key == "budget":
+        # 알뜰: 가격이 낮은 순
+        picked = sorted(available, key=lambda p: p["price"])
+    else:
+        picked = []
+
+    return [serialize(p) for p in picked[:SECTION_SIZE]]
+
+
+SECTION_META = [
+    {"key": "deal", "title": "이번 주 특가", "emoji": "🔥",
+     "description": "지금 가장 크게 할인 중인 상품"},
+    {"key": "popular", "title": "지금 인기 상품", "emoji": "👀",
+     "description": "많이 구매한 순서로 모았어요"},
+    {"key": "new", "title": "새로 들어왔어요", "emoji": "✨",
+     "description": "이번에 새로 입고된 신상품"},
+    {"key": "limited", "title": "한정 수량", "emoji": "⏰",
+     "description": "수량이 얼마 남지 않았어요"},
+    {"key": "budget", "title": "알뜰 쇼핑", "emoji": "💰",
+     "description": "가벼운 가격으로 채우는 장바구니"},
+]
+
+
+@app.get("/api/sections")
+def list_sections() -> dict:
+    """홈 화면 구좌(큐레이션 섹션) 목록.
+
+    구좌 정의를 서버가 갖고 있어 화면과 교차 검증할 수 있다.
+    (화면에 뜬 상품이 API 가 내려준 것과 같은지 확인 가능)
+    """
+    items = []
+    for m in SECTION_META:
+        picked = section_products(m["key"])
+        items.append({**m, "total": len(picked), "products": picked})
+    return {"items": items}
+
+
 @app.get("/api/products")
 async def list_products(
     category: str = Query(default=""),
     q: str = Query(default=""),
-    sort: str = Query(default="id", pattern="^(id|name|price)$"),
+    sort: str = Query(default="id", pattern="^(id|name|price|sales_count)$"),
     order: str = Query(default="asc", pattern="^(asc|desc)$"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=12, ge=1, le=50),
@@ -417,11 +554,11 @@ def get_product(product_id: int) -> dict:
 
 
 @app.get("/api/checkout")
-def checkout() -> dict:
+def checkout(session: str | None = Cookie(default=None)) -> dict:
     """주문서 진입 시 필요한 정보를 한 번에 반환 (컬리 checkout 스타일).
     운용 중인 항목(상품/금액/할인/배송비/결제수단)만 묶어서 제공.
     """
-    summary = cart_summary()
+    summary = cart_summary(session)
 
     # 상품할인 합계 = Σ(정가 - 할인가) × 수량
     discount_total = 0
@@ -442,30 +579,33 @@ def checkout() -> dict:
 
 
 @app.get("/api/cart")
-def get_cart() -> dict:
-    return cart_summary()
+def read_cart(session: str | None = Cookie(default=None)) -> dict:
+    return cart_summary(session)
 
 
 @app.post("/api/cart")
-def add_to_cart(payload: CartAddIn) -> dict:
+def add_to_cart(payload: CartAddIn, session: str | None = Cookie(default=None)) -> dict:
     p = find(payload.product_id)
     if not p:
         raise HTTPException(status_code=404, detail="Product not found")
     if p["stock"] == 0:
         raise HTTPException(status_code=409, detail="Sold out")
+    cart = get_cart(session)
     cart[payload.product_id] = cart.get(payload.product_id, 0) + payload.qty
-    return cart_summary()
+    return cart_summary(session)
 
 
 @app.patch("/api/cart/{product_id}")
-def update_cart(product_id: int, payload: CartUpdateIn) -> dict:
+def update_cart(product_id: int, payload: CartUpdateIn,
+                session: str | None = Cookie(default=None)) -> dict:
+    cart = get_cart(session)
     if product_id not in cart:
         raise HTTPException(status_code=404, detail="Not in cart")
     cart[product_id] = payload.qty
-    return cart_summary()
+    return cart_summary(session)
 
 
 @app.delete("/api/cart/{product_id}")
-def remove_from_cart(product_id: int) -> dict:
-    cart.pop(product_id, None)
-    return cart_summary()
+def remove_from_cart(product_id: int, session: str | None = Cookie(default=None)) -> dict:
+    get_cart(session).pop(product_id, None)
+    return cart_summary(session)

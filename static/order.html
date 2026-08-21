@@ -240,81 +240,87 @@
       return !document.querySelector(formId).classList.contains("hidden");
     }
 
-    function validate() {
-      let ok = true;
+    // 서버 검증 필드명 → 화면의 에러 표시 요소
+    const ERROR_FIELD_MAP = {
+      orderer_name: "#orderer-name-error",
+      orderer_phone: "#orderer-phone-error",
+      orderer_email: "#orderer-email-error",
+      recipient_name: "#recipient-error",
+      phone: "#phone-error",
+      address: "#address-error",
+    };
 
-      // 폼 모드인 섹션만 검증한다 (텍스트 표시 모드는 프로필 값을 그대로 쓰므로 검증 불필요)
-      const checks = [];
-      if (isFormMode("#orderer-form")) {
-        checks.push(
-          ["#orderer-name", "#orderer-name-error"],
-          ["#orderer-phone", "#orderer-phone-error"],
-          ["#orderer-email", "#orderer-email-error"],
-        );
+    function clearErrors() {
+      for (const sel of Object.values(ERROR_FIELD_MAP)) {
+        document.querySelector(sel).textContent = "";
       }
-      if (isFormMode("#delivery-form")) {
-        checks.push(
-          ["#recipient", "#recipient-error"],
-          ["#phone", "#phone-error"],
-          ["#address", "#address-error"],
-        );
-      }
-
-      for (const [input, err] of checks) {
-        const empty = !document.querySelector(input).value.trim();
-        document.querySelector(err).textContent = empty ? "필수 입력 항목입니다." : "";
-        if (empty) ok = false;
-      }
-
-      // 이메일 형식 (주문자 폼이 열려 있을 때만)
-      if (isFormMode("#orderer-form")) {
-        const email = document.querySelector("#orderer-email").value.trim();
-        if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-          document.querySelector("#orderer-email-error").textContent = "이메일 형식이 올바르지 않습니다.";
-          ok = false;
-        }
-      }
-      return ok;
     }
 
-    document.querySelector("#place-order").addEventListener("click", async () => {
-      if (!validate()) return;
-      const payment = document.querySelector('input[name="pay"]:checked').value;
-
-      // 폼이 열려 있으면 입력값을, 아니면 프로필 값을 사용
+    function buildOrderBody() {
+      // 폼이 열려 있으면 입력값을, 텍스트 표시 모드면 프로필 값을 담는다
       const ordererFromForm = isFormMode("#orderer-form");
       const deliveryFromForm = isFormMode("#delivery-form");
+      const val = (sel) => document.querySelector(sel).value.trim();
 
-      const body = {
-        orderer_name: ordererFromForm
-          ? document.querySelector("#orderer-name").value.trim() : (profile?.name || ""),
-        orderer_phone: ordererFromForm
-          ? document.querySelector("#orderer-phone").value.trim() : (profile?.phone || ""),
-        orderer_email: ordererFromForm
-          ? document.querySelector("#orderer-email").value.trim() : (profile?.email || ""),
-        recipient_name: deliveryFromForm
-          ? document.querySelector("#recipient").value.trim() : (profile?.name || ""),
-        phone: deliveryFromForm
-          ? document.querySelector("#phone").value.trim() : (profile?.phone || ""),
-        address: deliveryFromForm
-          ? document.querySelector("#address").value.trim() : (profile?.address || ""),
-        delivery_request: document.querySelector("#request").value.trim(),
-        payment_method: payment,
+      return {
+        orderer_name: ordererFromForm ? val("#orderer-name") : (profile?.name || ""),
+        orderer_phone: ordererFromForm ? val("#orderer-phone") : (profile?.phone || ""),
+        orderer_email: ordererFromForm ? val("#orderer-email") : (profile?.email || ""),
+        recipient_name: deliveryFromForm ? val("#recipient") : (profile?.name || ""),
+        phone: deliveryFromForm ? val("#phone") : (profile?.phone || ""),
+        address: deliveryFromForm ? val("#address") : (profile?.address || ""),
+        delivery_request: val("#request"),
+        payment_method: document.querySelector('input[name="pay"]:checked').value,
       };
+    }
+
+    function renderValidationErrors(detail) {
+      // FastAPI 422 응답의 detail[] 을 필드별 에러 문구로 표시
+      // detail 예: [{ "type": "string_too_short", "loc": ["body", "orderer_name"], ... }]
+      if (!Array.isArray(detail)) return;
+
+      for (const err of detail) {
+        const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : null;
+        const target = ERROR_FIELD_MAP[field];
+        if (!target) continue;
+
+        const isFormat = String(err.type || "").includes("pattern");
+        document.querySelector(target).textContent = isFormat
+          ? "이메일 형식이 올바르지 않습니다."
+          : "필수 입력 항목입니다.";
+      }
+    }
+
+    async function placeOrder() {
+      // 검증은 서버에 위임한다. 클릭하면 항상 주문 API 를 호출하고,
+      // 필수값이 모두 충족되면 201(생성), 하나라도 어긋나면 422(에러)를 받아 화면에 반영한다.
+      clearErrors();
 
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(buildOrderBody()),
       });
 
       if (res.status === 201) {
         const order = await res.json();
         window.location.href = `/order/complete/${order.order_id}`;
+        return;
+      }
+
+      const body = await res.json().catch(() => ({}));
+
+      if (res.status === 422) {
+        renderValidationErrors(body.detail);      // 필드별 에러 문구 노출
+        toast("입력값을 확인해주세요.", "err");
+      } else if (res.status === 409) {
+        toast(body.detail || "장바구니가 비어 있습니다.", "err");
       } else {
         toast("주문에 실패했습니다.", "err");
       }
-    });
+    }
+
+    document.querySelector("#place-order").addEventListener("click", placeOrder);
 
     initHeader();
     load();
