@@ -93,6 +93,24 @@ class Signupdata():
             logger.exception("valid_user 데이터 파일 읽기 실패: config/account.json")
             raise
 
+    def invalid_format(self) -> dict:
+        """
+            모든 규칙을 만족하는 기본 가입 정보.
+            conftest 의 reset 픽스처가 매 테스트마다 회원을 초기화하므로
+            같은 아이디를 계속 써도 중복 충돌이 나지 않는다.
+            (아이디/이메일/연락처 모두 시드 계정과 겹치지 않는 값이어야 한다)
+        """
+        try:
+            return self.get_account_data("invalid_format")
+
+        except Exception:
+            # 경로 계산 실패, 권한 문제 등 예상 못 한 읽기 오류
+            logger.exception("valid_user 데이터 파일 읽기 실패: config/account.json")
+            raise
+
+
+
+
     def existing_account(self) -> dict:
         """이미 가입된 계정 (중복 검증용)."""
 

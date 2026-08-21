@@ -11,12 +11,23 @@ from pages.signup.signup_data import Signupdata
 
 signup_data = Signupdata()          # 파일 읽기 전용 (캐시 공유)
 
+
+
 def filter_cases(field: str) -> list:
     """입력 차단 케이스 (한글·공백 등 필드에 남지 않아야 하는 값)."""
     cases = signup_data.get_account_data("filter_cases").get(field)
     if not cases:
         raise KeyError(f"account.json 의 filter_cases 에 '{field}' 가 없습니다.")
     return [pytest.param(input_value, id=case_id) for case_id, input_value in cases.items()]
+
+
+def allowed_special_chars() -> list:
+    """아이디/비밀번호에 허용되는 특수문자 케이스 (문자별로 하나씩)."""
+    chars = signup_data.allowed_special_chars()
+    if not chars:
+        raise KeyError("account.json 에 'allowed_special_chars' 데이터가 없습니다.")
+    # 실패한 문자를 리포트에서 바로 알 수 있게 인덱스와 문자를 함께 id 로 쓴다
+    return [pytest.param(char, id=f"special_{index}_{char}") for index, char in enumerate(chars)]
 
 
 def invalid_format_cases(field: str) -> list:

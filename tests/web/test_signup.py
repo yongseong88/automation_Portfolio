@@ -23,7 +23,7 @@ from pytest import FixtureRequest
 from pages.signup.signup_action import Signupaction
 from pages.signup.signup_data import Signupdata, ALLOWED_SPECIAL_CHARS, EXISTING_USER
 from pages.signup.signup_page import DIRECT, PASTE, SignupPage
-from pages.signup.signup_case import filter_cases, invalid_format_cases
+from pages.signup.signup_case import filter_cases, invalid_format_cases, allowed_special_chars
 from pages.signup.signup_rule import Signuprule
 from utilities.api import SignupApi
 
@@ -45,6 +45,66 @@ class TestSignup():
         signup_action.fill_signup_form(account, input_method)
 
         assert signup_action.input_value_check(account), f"{input_method} 입력값이 필드에 반영되지 않음"
+
+
+
+
+    # --- 가입 성공: (아이디 내 허용 특수문자)---
+    @pytest.mark.regression
+    @pytest.mark.parametrize("char", allowed_special_chars())
+    @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
+    def test_signup_username_char(self, char, input_method):
+        """아이디에 허용 특수문자가 들어가면 필드에 그대로 남고 가입된다. (문자별 확인)"""
+        signup_page = SignupPage(self.page, self.base_url)
+        signup_action = Signupaction(self.page, self.base_url)
+        signup_data = Signupdata()
+
+        sign_username = signup_data.valid_account().get("username") + char
+        update_account = signup_data.account_with(username=sign_username)
+
+        signup_page.go_to_signup()
+        signup_action.fill_signup_form(update_account, input_method)
+
+        # 입력 자체가 차단되지 않았는지 먼저 확인
+        actual = signup_page.field_value("username")
+        assert actual == sign_username, f"허용 특수문자가 입력되지 않음: 문자={char!r}, 기대={sign_username!r}, 실제={actual!r}"
+
+        signup_page.submit()
+        assert signup_action.signup_success_check(update_account), "정상 정보로 가입되지 않음"
+
+
+
+
+    # --- 가입 성공: (비밀번호 내 허용 특수문자)---
+    @pytest.mark.regression
+    @pytest.mark.parametrize("char", allowed_special_chars())
+    @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
+    def test_signup_password_char(self, char, input_method):
+        """비밀번호에 허용 특수문자가 들어가면 필드에 그대로 남고 가입된다. (문자별 확인)"""
+        signup_page = SignupPage(self.page, self.base_url)
+        signup_action = Signupaction(self.page, self.base_url)
+        signup_data = Signupdata()
+
+        sign_pwd = signup_data.invalid_format().get("password").get("no_special") + char
+        update_account = signup_data.account_with(password=sign_pwd)
+
+        signup_page.go_to_signup()
+        signup_action.fill_signup_form(update_account, input_method)
+
+        # 입력 자체가 차단되지 않았는지 먼저 확인
+        actual = signup_page.field_value("password")
+        assert actual == sign_pwd, f"허용 특수문자가 입력되지 않음: 문자={char!r}, 기대={sign_pwd!r}, 실제={actual!r}"
+
+        signup_page.submit()
+        assert signup_action.signup_success_check(update_account), "정상 정보로 가입되지 않음"
+
+
+
+
+
+
+
+
 
     # --- 가입 성공 ---
     @pytest.mark.regression
@@ -169,6 +229,28 @@ class TestSignup():
 
 
 
+    # # --- 비밀번호 확인: 불일치 (차단) ---
+    # @pytest.mark.regression
+    # @pytest.mark.parametrize("input_method", INPUT_METHODS)
+    # def test_signup_password_confirm_mismatch(self, input_method):
+    #     """비밀번호와 확인값이 다르면 가입이 차단되고 불일치 문구가 노출된다."""
+    #     signup_action = Signupaction(self.page, self.base_url)
+    #     signup_data = Signupdata(self.base_url)
+    #     account = signup_data.account_with(password_confirm="Passw0rd!!")
+    #     mismatch_msg = signup_data.msg_value()["password_mismatch"]
+    #
+    #     signup_action.signup(account, input_method)
+    #
+    #     assert signup_action.signup_blocked_check(account, "password_confirm", mismatch_msg), \
+    #         "비밀번호 확인이 불일치인데 가입되거나 문구가 노출되지 않음"
+
+
+
+
+
+
+
+
 
 
 
@@ -232,26 +314,6 @@ class TestSignup():
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # # --- 아이디: 허용 길이 4~10자 (경계값 성공) ---
     # @pytest.mark.regression
     # @pytest.mark.parametrize("input_method", INPUT_METHODS)
@@ -268,6 +330,7 @@ class TestSignup():
     #     signup_action.signup(account, input_method)
     #
     #     assert signup_action.signup_success_check(account), f"허용 길이 아이디인데 가입 실패: {username!r}"
+
 
     # --- 아이디: 특수문자 허용 (성공) ---
     # @pytest.mark.regression
