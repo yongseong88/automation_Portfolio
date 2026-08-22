@@ -33,19 +33,21 @@ INPUT_METHODS = [DIRECT, PASTE]
 @pytest.mark.ui_journey
 class TestSignup():
 
+    # --- 가입 성공: 모든 조건 충족 ---
     @pytest.mark.regression
     @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
-    def test_signup_input_value_match(self, input_method):
-        """입력한 값이 각 필드에 그대로 들어간다 (붙여넣기 유실 확인)."""
+    def test_signup_success(self, input_method):
+        """모든 규칙을 만족하면 가입이 완료되고 로그인 페이지로 이동한다."""
         signup_page = SignupPage(self.page, self.base_url)
         signup_action = Signupaction(self.page, self.base_url)
         account = Signupdata().valid_account()
 
         signup_page.go_to_signup()
         signup_action.fill_signup_form(account, input_method)
-
         assert signup_action.input_value_check(account), f"{input_method} 입력값이 필드에 반영되지 않음"
 
+        signup_page.submit()
+        assert signup_action.signup_success_check(account), "정상 정보로 가입되지 않음"
 
 
 
@@ -73,8 +75,6 @@ class TestSignup():
         assert signup_action.signup_success_check(update_account), "정상 정보로 가입되지 않음"
 
 
-
-
     # --- 가입 성공: (비밀번호 내 허용 특수문자)---
     @pytest.mark.regression
     @pytest.mark.parametrize("char", allowed_special_chars())
@@ -99,33 +99,7 @@ class TestSignup():
         assert signup_action.signup_success_check(update_account), "정상 정보로 가입되지 않음"
 
 
-
-
-
-
-
-
-
-    # --- 가입 성공 ---
-    @pytest.mark.regression
-    @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
-    def test_signup_success(self, input_method):
-        """모든 규칙을 만족하면 가입이 완료되고 로그인 페이지로 이동한다."""
-        signup_page = SignupPage(self.page, self.base_url)
-        signup_action = Signupaction(self.page, self.base_url)
-        account = Signupdata().valid_account()
-
-        signup_page.go_to_signup()
-        signup_action.fill_signup_form(account, input_method)
-        assert signup_action.input_value_check(account), f"{input_method} 입력값이 필드에 반영되지 않음"
-
-
-        signup_page.submit()
-        assert signup_action.signup_success_check(account), "정상 정보로 가입되지 않음"
-
-
-
-    # --- 아이디 허용 외 문자는 필드에서 걸러진다 ---
+    # --- 허용 외 문자 차단: 아이디---
     @pytest.mark.regression
     @pytest.mark.parametrize("input_id", filter_cases("username"))
     @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
@@ -143,7 +117,7 @@ class TestSignup():
         assert actual == remained, f"허용 외 문자가 걸러지지 않음: 입력={input_id!r}, 기대={remained!r}, 실제={actual!r}"
 
 
-    # --- 비밀번호 허용 외 문자는 필드에서 걸러진다 ---
+    # --- 허용 외 문자 차단: 비밀번호---
     @pytest.mark.regression
     @pytest.mark.parametrize("input_pwd", filter_cases("password"))
     @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
@@ -191,7 +165,7 @@ class TestSignup():
 
 
 
-    # --- 비밀번호: 길이 위반 / 한글 / 공백 / 특수문자 없음 (차단) ---
+    # --- 비밀번호: 길이 위반 / 특수문자 없음 (차단) ---
     @pytest.mark.regression
     @pytest.mark.parametrize("invalid_pwd", invalid_format_cases("password"))
     @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
@@ -213,7 +187,6 @@ class TestSignup():
 
         signup_page.go_to_signup()
         signup_action.fill_signup_form(update_account, input_method)
-
         signup_page.submit()
 
         signup_response = res.signup(update_account)
@@ -227,7 +200,49 @@ class TestSignup():
         assert signup_response.status == 422, "형식 위반인데 가입 api 가 422 가 아님"
         assert target is not None, f"422 응답에 password 오류가 없음: {body}"
 
+    # --- 비밀번호 확인 불일치 차단 ---
+    @pytest.mark.regression
+    @pytest.mark.parametrize("input_method", INPUT_METHODS)
+    def test_signup_password_confirm_mismatch(self, input_method):
+        """비밀번호와 확인값이 다르면 가입이 차단되고 불일치 문구가 노출된다.
 
+        비밀번호 확인은 화면 전용 검증이라 서버(SignupIn)에는 전달되지 않는다.
+        따라서 api 검증 없이 화면 차단만 확인한다.
+        """
+        signup_page = SignupPage(self.page, self.base_url)
+        signup_action = Signupaction(self.page, self.base_url)
+        signup_data = Signupdata()
+
+        update_account = signup_data.account_with(password_confirm="Passw0rd!!")
+        mismatch_msg = signup_data.msg_value()["password_mismatch"]
+
+        signup_page.go_to_signup()
+        signup_action.fill_signup_form(update_account, input_method)
+        signup_page.submit()
+
+        assert signup_action.signup_blocked_check(update_account, "password_confirm", mismatch_msg), \
+            "비밀번호 확인이 불일치인데 가입되거나 문구가 노출되지 않음"
+
+
+
+
+
+
+
+
+
+    # @pytest.mark.regression
+    # @pytest.mark.parametrize("input_method", ["직접입력", "붙여넣기"])
+    # def test_signup_input_value_match(self, input_method):
+    #     """입력한 값이 각 필드에 그대로 들어간다 (붙여넣기 유실 확인)."""
+    #     signup_page = SignupPage(self.page, self.base_url)
+    #     signup_action = Signupaction(self.page, self.base_url)
+    #     account = Signupdata().valid_account()
+    #
+    #     signup_page.go_to_signup()
+    #     signup_action.fill_signup_form(account, input_method)
+    #
+    #     assert signup_action.input_value_check(account), f"{input_method} 입력값이 필드에 반영되지 않음"
 
     # # --- 비밀번호 확인: 불일치 (차단) ---
     # @pytest.mark.regression
@@ -243,18 +258,6 @@ class TestSignup():
     #
     #     assert signup_action.signup_blocked_check(account, "password_confirm", mismatch_msg), \
     #         "비밀번호 확인이 불일치인데 가입되거나 문구가 노출되지 않음"
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     # @pytest.mark.regression

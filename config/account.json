@@ -47,7 +47,7 @@
     "password": {
       "too_short": "abc123!",
       "too_long": "abcdefghij123456!",
-      "no_special": "abcd12345"
+      "no_special": "yong889734"
     },
     "email": {
       "no_at_mark": "nomarkmail.com",
